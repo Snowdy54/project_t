@@ -1,121 +1,92 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+
+// Временные заглушки для страниц (позже мы вынесем их в отдельные файлы)
+const Home = () => (
+  <>
+    {/* Главный баннер */}
+    <div 
+      className="container-fluid py-5 text-center text-dark" 
+      style={{ background: 'linear-gradient(to bottom, #f8f9fa, #d4edda)', minHeight: '400px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
+    >
+      <div className="container">
+        <h1 className="display-4 fw-bold mb-4">Найдите ближайший пункт приема вторсырья</h1>
+        <p className="lead mb-4">Сделайте свой вклад в экологию. Сдавайте перерабатываемые отходы быстро и удобно.</p>
+        <Link to="/map" className="btn btn-success btn-lg px-5 rounded-pill shadow-sm">
+          Найти пункты приема <i className="bi bi-arrow-right"></i>
+        </Link>
+      </div>
+    </div>
+
+    {/* Блок статистики */}
+    <div className="container my-5">
+      <div className="row text-center border-bottom pb-4 mb-4">
+        <div className="col-md-3">
+          <h2 className="fw-bold">66%</h2>
+          <p className="text-muted">перерабатывается</p>
+        </div>
+        <div className="col-md-3">
+          <h2 className="fw-bold">200+</h2>
+          <p className="text-muted">пунктов приема</p>
+        </div>
+        <div className="col-md-3">
+          <h2 className="fw-bold">120 000+</h2>
+          <p className="text-muted">пользователей</p>
+        </div>
+        <div className="col-md-3">
+          <h2 className="fw-bold">15 млрд</h2>
+          <p className="text-muted">спасенных деревьев</p>
+        </div>
+      </div>
+    </div>
+
+    {/* Блок Популярное */}
+    <div className="container my-5">
+      <h3 className="mb-4">Популярные статьи</h3>
+      <div className="row">
+        {[1, 2, 3].map((item) => (
+          <div className="col-md-4 mb-4" key={item}>
+            <div className="card h-100 border-0 shadow-sm bg-light">
+              <div className="card-body" style={{ minHeight: '150px' }}>
+                <h5 className="card-title text-secondary">Название статьи {item}</h5>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </>
+);
+
+const MapPage = () => <div className="container mt-5"><h1>Карта</h1></div>;
+const Login = () => <div className="container mt-5"><h1>Вход</h1></div>;
+const Profile = () => <div className="container mt-5"><h1>Личный кабинет</h1></div>;
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <Router>
+      {/* Временное меню (Navbar) на базе Bootstrap */}
+      <nav className="navbar navbar-expand-lg navbar-light bg-light">
+        <div className="container">
+          <Link className="navbar-brand" to="/">Эко-Проект</Link>
+          <div className="navbar-nav">
+            <Link className="nav-link" to="/">Главная</Link>
+            <Link className="nav-link" to="/map">Карта</Link>
+            <Link className="nav-link" to="/profile">ЛК</Link>
+            <Link className="nav-link" to="/login">Войти</Link>
+          </div>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+      </nav>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      {/* Сами маршруты */}
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/map" element={<MapPage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/profile" element={<Profile />} />
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
+
+export default App;
