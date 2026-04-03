@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import './App.css';
+import axios from 'axios';
 
 const Home = () => (
   <div className="w-100">
@@ -195,27 +196,22 @@ const Home = () => (
   </div>
 );
 
-// ---- ОСТАЛЬНЫЕ СТРАНИЦЫ ----
 const MapPage = () => {
   const [points, setPoints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/api/points/')
+    // Используем axios вместо fetch
+    axios.get('http://127.0.0.1:8000/api/points/')
       .then(response => {
-        if (!response.ok) {
-          throw new Error('Ошибка сети или CORS');
-        }
-        return response.json();
-      })
-      .then(data => {
-        console.log('Данные от бэкенда:', data);
-        setPoints(data);
+        console.log('Данные от бэкенда:', response.data);
+        setPoints(response.data); // В axios данные лежат в свойстве .data
         setLoading(false);
       })
       .catch(error => {
         console.error('Ошибка при получении данных:', error);
+        // Красиво выводим текст ошибки
         setError(error.message);
         setLoading(false);
       });
@@ -237,19 +233,19 @@ const MapPage = () => {
       {!loading && !error && (
         <div className="d-flex flex-wrap justify-content-center gap-4 mt-4">
           {points.length === 0 ? (
-            <p>Пунктов пока нет.</p>
+            <p>Пунктов пока нет. Добавьте их через админку Django!</p>
           ) : (
-            points.map((point, index) => (
-              <div key={index} className="card p-4 shadow-sm border-0" style={{ width: '350px', textAlign: 'left', borderRadius: '20px', backgroundColor: '#f1f4e9' }}>
+            points.map((point) => (
+              <div key={point.id} className="card p-4 shadow-sm border-0" style={{ width: '350px', textAlign: 'left', borderRadius: '20px', backgroundColor: '#f1f4e9' }}>
                 <h5 className="font-russkin" style={{ color: '#18442a', fontSize: '1.2rem' }}>
                   {point.name || 'Название пункта'}
                 </h5>
                 <p className="mb-2" style={{ fontSize: '0.9rem', color: '#18442a' }}>
                   <strong>Адрес:</strong> {point.address || 'Адрес не указан'}
                 </p>
-                {point.coordinates && (
+                {point.latitude && point.longitude && (
                   <p className="mb-3" style={{ fontSize: '0.8rem', color: '#666' }}>
-                    Координаты: {point.coordinates.lat || point.coordinates[0]}, {point.coordinates.lng || point.coordinates[1]}
+                    Координаты: {point.latitude}, {point.longitude}
                   </p>
                 )}
                 

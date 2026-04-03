@@ -9,15 +9,15 @@ services:
     ports:
       - "8000:8000"
 
-  # ЗАГОТОВКА
-  # frontend:
-  #   build: ./frontend
-  #   volumes:
-  #     - ./frontend:/app
-  #     - /app/node_modules
-  #   ports:
-  #     - "5173:5173" # Порт по умолчанию для Vite (или 3000 для CRA)
-  #   stdin_open: true
+# ЗАГОТОВКА
+frontend:
+  build: ./frontend
+  volumes:
+    - ./frontend:/app
+    - /app/node_modules
+  ports:
+    - "5173:5173" # Порт по умолчанию для Vite (или 3000 для CRA)
+  stdin_open: true
 
 volumes:
   sqlite_data:
