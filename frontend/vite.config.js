@@ -1,16 +1,14 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
+    port: 5173, // Мой React работает тут
     proxy: {
-      // Все запросы, начинающиеся с /api, будут перенаправляться на Django
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'http://localhost:8000', // Адрес, где будет работать Django
         changeOrigin: true,
-        secure: false,
       }
     }
   }
