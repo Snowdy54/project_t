@@ -195,12 +195,83 @@ const Home = () => (
   </div>
 );
 
-const MapPage = () => <div className="container-fluid mt-5 text-center"><h1>Здесь будет карта</h1></div>;
+// ---- ОСТАЛЬНЫЕ СТРАНИЦЫ ----
+const MapPage = () => {
+  const [points, setPoints] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetch('http://127.0.0.1:8000/api/points/')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Ошибка сети или CORS');
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Данные от бэкенда:', data);
+        setPoints(data);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error('Ошибка при получении данных:', error);
+        setError(error.message);
+        setLoading(false);
+      });
+  }, []);
+
+  return (
+    <div className="container-fluid mt-5 text-center" style={{ minHeight: '60vh' }}>
+      <h2 className="font-russkin mb-4" style={{ color: '#18442a' }}>ПУНКТЫ ПРИЕМА (ТЕСТ API)</h2>
+      
+      {loading && <div className="spinner-border text-success" role="status"><span className="visually-hidden">Загрузка...</span></div>}
+      
+      {error && (
+        <div className="alert alert-danger mx-auto" style={{ maxWidth: '600px' }}>
+          <strong>Ошибка связи с бэкендом:</strong> {error}
+          <br/>Убедитесь, что сервер Django запущен на порту 8000.
+        </div>
+      )}
+      
+      {!loading && !error && (
+        <div className="d-flex flex-wrap justify-content-center gap-4 mt-4">
+          {points.length === 0 ? (
+            <p>Пунктов пока нет.</p>
+          ) : (
+            points.map((point, index) => (
+              <div key={index} className="card p-4 shadow-sm border-0" style={{ width: '350px', textAlign: 'left', borderRadius: '20px', backgroundColor: '#f1f4e9' }}>
+                <h5 className="font-russkin" style={{ color: '#18442a', fontSize: '1.2rem' }}>
+                  {point.name || 'Название пункта'}
+                </h5>
+                <p className="mb-2" style={{ fontSize: '0.9rem', color: '#18442a' }}>
+                  <strong>Адрес:</strong> {point.address || 'Адрес не указан'}
+                </p>
+                {point.coordinates && (
+                  <p className="mb-3" style={{ fontSize: '0.8rem', color: '#666' }}>
+                    Координаты: {point.coordinates.lat || point.coordinates[0]}, {point.coordinates.lng || point.coordinates[1]}
+                  </p>
+                )}
+                
+                <div className="mt-auto p-2" style={{ backgroundColor: '#e8eedf', borderRadius: '10px', fontSize: '0.75rem', overflowX: 'auto' }}>
+                  <pre className="m-0" style={{ color: '#18442a' }}>
+                    {JSON.stringify(point, null, 2)}
+                  </pre>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const Login = () => <div className="container-fluid mt-5 text-center"><h1>Вход</h1></div>;
 const Profile = () => <div className="container-fluid mt-5 text-center"><h1>Личный кабинет</h1></div>;
 const Articles = () => <div className="container-fluid mt-5 text-center"><h1>Статьи и подкасты</h1></div>;
 
-// ---- ОБНОВЛЕННАЯ НАВИГАЦИЯ (ШАПКА ПО ФИГМЕ) ----
+// ---- НАВИГАЦИЯ (ШАПКА) ----
 const CustomNavbar = () => {
   const location = useLocation();
   
@@ -211,16 +282,14 @@ const CustomNavbar = () => {
         zIndex: 1000, 
         paddingTop: '18px', 
         paddingBottom: '18px',
-        paddingLeft: '80px', // Точный отступ логотипа по макету
-        paddingRight: '80px', // Точный отступ для кнопки ЛК
+        paddingLeft: '80px', 
+        paddingRight: '80px', 
       }}
     >
-      {/* 1. Логотип (51x55px) */}
       <div className="d-flex align-items-center">
         <img src="/logo.jpg" alt="Логотип" style={{ width: '51px', height: '55px', objectFit: 'contain' }} />
       </div>
       
-      {/* 3. Центральное меню (Group 24 - 503x40px) */}
       <div 
         className="d-flex align-items-center justify-content-between" 
         style={{ 
@@ -269,7 +338,6 @@ const CustomNavbar = () => {
         </Link>
       </div>
 
-      {/* 4. Кнопка Личный кабинет (Frame 3 - высота 41px, скругление 40px) */}
       <Link 
         to="/profile" 
         className="text-decoration-none text-dark d-flex align-items-center justify-content-center" 
