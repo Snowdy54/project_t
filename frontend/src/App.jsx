@@ -212,11 +212,11 @@ const Home = () => {
           paddingRight: '80px' 
         }}
       >
-        <div style={{ color: '#FFFFFF', fontSize: '12px', fontWeight: 700, fontFamily: 'Actay, sans-serif' }}>
+        <div style={{ color: '#18442a', fontSize: '12px', fontWeight: 700, fontFamily: 'Actay, sans-serif' }}>
           © 2026 «ГдеСдать»
         </div>
-        <div style={{ color: '#FFFFFF', fontSize: '12px', fontWeight: 700, fontFamily: 'Actay, sans-serif' }}>
-          Support: <a href="mailto:gdesdat@gmail.com" style={{ color: '#FFFFFF', textDecoration: 'none' }}>gdesdat@gmail.com</a>
+        <div style={{ color: '#18442a', fontSize: '12px', fontWeight: 700, fontFamily: 'Actay, sans-serif' }}>
+          Support: <a href="mailto:gdesdat@gmail.com" style={{ color: '#18442a', textDecoration: 'none' }}>gdesdat@gmail.com</a>
         </div>
       </footer>
 
