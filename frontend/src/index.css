@@ -1,0 +1,53 @@
+/* Подключаем Actay Regular */
+@font-face {
+  font-family: 'Actay';
+  src: url('/fonts/Actay-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Подключаем Actay Bold */
+@font-face {
+  font-family: 'Actay';
+  src: url('/fonts/ActayWide-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Подключаем RUSSkin */
+@font-face {
+  font-family: 'Russkin';
+  src: url("/fonts/RUSSkin & Bones SHA_2.otf") format('opentype'); 
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Применяем Actay ко всему сайту по умолчанию */
+:root, body, p, a, span, button {
+  font-family: 'Actay', sans-serif !important;
+}
+
+/* Применяем Russkin только к заголовком */
+.font-russkin {
+  font-family: 'Russkin', sans-serif !important;
+  text-transform: uppercase;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-width: 100vw;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-color: #ffffff;
+}
+
+#root {
+  width: 100vw;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
