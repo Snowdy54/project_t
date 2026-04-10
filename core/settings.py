@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-!s(rmaa)jj3lnk#bj=q3h3sx*%rlpr63)$-%t(g8z1&4en$n%p
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -130,6 +130,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'api.User'
 
 CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5174",  # текущий порт React
+    "http://127.0.0.1:5174",
     "http://localhost:5173",
-    "http://127.0.0.1:5173",
+    "http://localhost:3000",
 ]
