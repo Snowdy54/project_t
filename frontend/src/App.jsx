@@ -230,8 +230,13 @@ const MapPage = () => {
   const [points, setPoints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Новые состояния для фильтров
+  const [wastes, setWastes] = useState([]); // Список всех существующих типов мусора (для кнопок)
+  const [activeFilter, setActiveFilter] = useState(null); // Текущий выбранный фильтр (null = "Все")
 
   useEffect(() => {
+    // 1. Загружаем все точки
     fetch('http://127.0.0.1:8000/api/points/')
       .then(response => {
         if (!response.ok) throw new Error('Ошибка сети');
@@ -239,6 +244,24 @@ const MapPage = () => {
       })
       .then(data => {
         setPoints(data);
+        
+        // 2. Извлекаем уникальные типы вторсырья из полученных точек
+        // Проходим по всем точкам, собираем их accepted_waste в один массив и убираем дубликаты по имени
+        const allWastes = [];
+        const wasteNames = new Set();
+        
+        data.forEach(point => {
+          if (point.accepted_waste) {
+            point.accepted_waste.forEach(waste => {
+              if (!wasteNames.has(waste.name)) {
+                wasteNames.add(waste.name);
+                allWastes.push(waste);
+              }
+            });
+          }
+        });
+        
+        setWastes(allWastes);
         setLoading(false);
       })
       .catch(error => {
@@ -248,15 +271,59 @@ const MapPage = () => {
       });
   }, []);
 
+  // Фильтруем точки перед отрисовкой
+  // Оставляем только те точки, у которых в accepted_waste есть мусор с именем activeFilter
+  const filteredPoints = activeFilter 
+    ? points.filter(point => 
+        point.accepted_waste?.some(waste => waste.name === activeFilter)
+      )
+    : points; // Если фильтр не выбран, показываем все
+
   return (
     <div className="container-fluid mt-4 mb-5" style={{ height: '80vh', paddingLeft: '80px', paddingRight: '80px' }}>
       <h2 className="font-russkin mb-4" style={{ color: '#18442a', fontSize: '2.5rem' }}>КАРТА ПУНКТОВ ПРИЕМА</h2>
       
+      {/* ПАНЕЛЬ ФИЛЬТРОВ */}
+      {!loading && !error && wastes.length > 0 && (
+        <div className="d-flex flex-wrap gap-2 mb-3">
+          <button 
+            className={`btn rounded-pill px-4 shadow-sm ${activeFilter === null ? 'active-filter' : 'inactive-filter'}`}
+            style={{
+              backgroundColor: activeFilter === null ? '#18442a' : '#f1f4e9',
+              color: activeFilter === null ? '#ffffff' : '#18442a',
+              border: 'none',
+              fontSize: '14px',
+              fontWeight: activeFilter === null ? 700 : 400
+            }}
+            onClick={() => setActiveFilter(null)}
+          >
+            Все
+          </button>
+          
+          {wastes.map(waste => (
+            <button 
+              key={waste.id || waste.name}
+              className={`btn rounded-pill px-4 shadow-sm ${activeFilter === waste.name ? 'active-filter' : 'inactive-filter'}`}
+              style={{
+                backgroundColor: activeFilter === waste.name ? '#18442a' : '#f1f4e9',
+                color: activeFilter === waste.name ? '#ffffff' : '#18442a',
+                border: 'none',
+                fontSize: '14px',
+                fontWeight: activeFilter === waste.name ? 700 : 400
+              }}
+              onClick={() => setActiveFilter(waste.name)}
+            >
+              {waste.name}
+            </button>
+          ))}
+        </div>
+      )}
+
       {loading && <div className="text-center"><div className="spinner-border text-success"></div></div>}
       {error && <div className="alert alert-danger text-center mx-auto" style={{maxWidth: '600px'}}>{error}</div>}
 
       {!loading && !error && (
-        <div className="w-100 h-100 shadow-sm rounded overflow-hidden" style={{ border: '2px solid #E7EFE8', borderRadius: '20px' }}>
+        <div className="w-100 shadow-sm rounded overflow-hidden" style={{ height: 'calc(100% - 100px)', border: '2px solid #E7EFE8', borderRadius: '20px' }}>
           <YMaps query={{ apikey: "cd6e05b5-779b-4303-b21c-f9534e4a4a39" }}>
             <Map 
               defaultState={{ 
@@ -270,13 +337,13 @@ const MapPage = () => {
               <ZoomControl options={{ float: "right" }} />
               <GeolocationControl options={{ float: "left" }} />
 
-              {points.map((point) => {
+              {/* Отрисовываем уже отфильтрованный массив filteredPoints */}
+              {filteredPoints.map((point) => {
                 const lat = point.coordinates?.lat || point.latitude || point.coordinates?.[0];
                 const lng = point.coordinates?.lng || point.longitude || point.coordinates?.[1];
 
                 if (!lat || !lng) return null;
 
-                // Формируем HTML-строку для тегов мусора (зеленые плашки)
                 const wasteTags = point.accepted_waste?.map(waste => 
                   `<span style="display: inline-block; background-color: #f1f4e9; color: #18442a; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-right: 4px; margin-bottom: 4px;">
                     ${waste.name}
