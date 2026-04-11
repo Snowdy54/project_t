@@ -8,7 +8,6 @@ const Home = () => {
 
   return (
     <div className="w-100">
-      
       {/* ---- БЛОК С ГОРАМИ И ЗАГОЛОВКАМИ (HERO СЕКЦИЯ) ---- */}
       <div 
         className="container-fluid text-center d-flex flex-column justify-content-start align-items-center position-relative" 
