@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { YMaps, Map, Placemark, ZoomControl, GeolocationControl } from '@pbe/react-yandex-maps';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import './App.css';
 import axios from 'axios';
@@ -231,61 +232,84 @@ const MapPage = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Используем axios вместо fetch
-    axios.get('http://127.0.0.1:8000/api/points/')
+    fetch('http://127.0.0.1:8000/api/points/')
       .then(response => {
-        console.log('Данные от бэкенда:', response.data);
-        setPoints(response.data); // В axios данные лежат в свойстве .data
+        if (!response.ok) throw new Error('Ошибка сети');
+        return response.json();
+      })
+      .then(data => {
+        setPoints(data);
         setLoading(false);
       })
       .catch(error => {
-        console.error('Ошибка при получении данных:', error);
-        // Красиво выводим текст ошибки
+        console.error('Ошибка:', error);
         setError(error.message);
         setLoading(false);
       });
   }, []);
 
   return (
-    <div className="container-fluid mt-5 text-center" style={{ minHeight: '60vh' }}>
-      <h2 className="font-russkin mb-4" style={{ color: '#18442a' }}>ПУНКТЫ ПРИЕМА (ТЕСТ API)</h2>
+    <div className="container-fluid mt-4 mb-5" style={{ height: '80vh', paddingLeft: '80px', paddingRight: '80px' }}>
+      <h2 className="font-russkin mb-4" style={{ color: '#18442a', fontSize: '2.5rem' }}>КАРТА ПУНКТОВ ПРИЕМА</h2>
       
-      {loading && <div className="spinner-border text-success" role="status"><span className="visually-hidden">Загрузка...</span></div>}
-      
-      {error && (
-        <div className="alert alert-danger mx-auto" style={{ maxWidth: '600px' }}>
-          <strong>Ошибка связи с бэкендом:</strong> {error}
-          <br/>Убедитесь, что сервер Django запущен на порту 8000.
-        </div>
-      )}
-      
+      {loading && <div className="text-center"><div className="spinner-border text-success"></div></div>}
+      {error && <div className="alert alert-danger text-center mx-auto" style={{maxWidth: '600px'}}>{error}</div>}
+
       {!loading && !error && (
-        <div className="d-flex flex-wrap justify-content-center gap-4 mt-4">
-          {points.length === 0 ? (
-            <p>Пунктов пока нет. Добавьте их через админку Django!</p>
-          ) : (
-            points.map((point) => (
-              <div key={point.id} className="card p-4 shadow-sm border-0" style={{ width: '350px', textAlign: 'left', borderRadius: '20px', backgroundColor: '#f1f4e9' }}>
-                <h5 className="font-russkin" style={{ color: '#18442a', fontSize: '1.2rem' }}>
-                  {point.name || 'Название пункта'}
-                </h5>
-                <p className="mb-2" style={{ fontSize: '0.9rem', color: '#18442a' }}>
-                  <strong>Адрес:</strong> {point.address || 'Адрес не указан'}
-                </p>
-                {point.latitude && point.longitude && (
-                  <p className="mb-3" style={{ fontSize: '0.8rem', color: '#666' }}>
-                    Координаты: {point.latitude}, {point.longitude}
-                  </p>
-                )}
-                
-                <div className="mt-auto p-2" style={{ backgroundColor: '#e8eedf', borderRadius: '10px', fontSize: '0.75rem', overflowX: 'auto' }}>
-                  <pre className="m-0" style={{ color: '#18442a' }}>
-                    {JSON.stringify(point, null, 2)}
-                  </pre>
-                </div>
-              </div>
-            ))
-          )}
+        <div className="w-100 h-100 shadow-sm rounded overflow-hidden" style={{ border: '2px solid #E7EFE8', borderRadius: '20px' }}>
+          <YMaps query={{ apikey: "cd6e05b5-779b-4303-b21c-f9534e4a4a39" }}>
+            <Map 
+              defaultState={{ 
+                center: [55.751574, 37.573856],
+                zoom: 10,
+                controls: []
+              }} 
+              width="100%" 
+              height="100%"
+            >
+              <ZoomControl options={{ float: "right" }} />
+              <GeolocationControl options={{ float: "left" }} />
+
+              {points.map((point) => {
+                const lat = point.coordinates?.lat || point.latitude || point.coordinates?.[0];
+                const lng = point.coordinates?.lng || point.longitude || point.coordinates?.[1];
+
+                if (!lat || !lng) return null;
+
+                // Формируем HTML-строку для тегов мусора (зеленые плашки)
+                const wasteTags = point.accepted_waste?.map(waste => 
+                  `<span style="display: inline-block; background-color: #f1f4e9; color: #18442a; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-right: 4px; margin-bottom: 4px;">
+                    ${waste.name}
+                  </span>`
+                ).join('') || 'Нет данных о вторсырье';
+
+                return (
+                  <Placemark 
+                    key={point.id || point.name}
+                    geometry={[parseFloat(lat), parseFloat(lng)]}
+                    properties={{
+                      balloonContentHeader: `<strong style="color: #18442a; font-size: 16px;">${point.name}</strong>`,
+                      balloonContentBody: `
+                        <div style="margin-bottom: 8px;">
+                          <span style="color: #666; font-size: 13px;">Адрес:</span><br/>
+                          <span style="font-size: 14px;">${point.address || 'Не указан'}</span>
+                        </div>
+                        <div>
+                          <span style="color: #666; font-size: 13px; display: block; margin-bottom: 4px;">Принимают:</span>
+                          ${wasteTags}
+                        </div>
+                      `,
+                      hintContent: point.name
+                    }}
+                    options={{
+                      preset: 'islands#darkGreenIcon',
+                    }}
+                    modules={['geoObject.addon.balloon', 'geoObject.addon.hint']}
+                  />
+                );
+              })}
+            </Map>
+          </YMaps>
         </div>
       )}
     </div>
