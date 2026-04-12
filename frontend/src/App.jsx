@@ -478,30 +478,39 @@ const MapPage = () => {
             {filteredPoints.length === 0 ? "ТОЧКИ НЕ НАЙДЕНЫ" : `${getFoundWord(filteredPoints.length)} ${filteredPoints.length} ${getPointsWord(filteredPoints.length)}`}
           </h4>
           
-          <div style={{ borderBottom: '1px solid #dee2e6', marginBottom: '16px' }}></div>
+          <hr style={{ margin: '0 -32px 16px -32px', border: 'none', borderTop: '1px solid #E7EFE8', opacity: 1 }} />
           
-          <div className="d-flex flex-column gap-3">
+          <div className="d-flex flex-column">
             {filteredPoints.length === 0 ? (
               <p style={{ color: '#666', fontSize: '13px', marginLeft: '8px' }}>Нет подходящих точек. Попробуйте изменить фильтры.</p>
             ) : (
-              filteredPoints.map(point => (
-                <div 
-                  key={point.id} className="border-bottom pb-3" onClick={() => handlePointClick(point)} 
-                  style={{ cursor: 'pointer', opacity: selectedPointData?.id && selectedPointData.id !== point.id ? 0.6 : 1 }}
-                >
-                  <div className="d-flex gap-2 mb-2 flex-wrap">
-                    {point.accepted_waste?.map(w => {
-                      const catData = allCategories.find(c => c.name === w.name);
-                      return (
-                        <span key={w.id} style={{ backgroundColor: catData ? catData.color : '#f1f4e9', color: '#666', fontSize: '11px', padding: '4px 12px', borderRadius: '12px' }}>
-                          {w.name}
-                        </span>
-                      )
-                    })}
+              filteredPoints.map((point, index) => (
+                <div key={point.id}>
+                  <div 
+                    onClick={() => handlePointClick(point)} 
+                    style={{ 
+                      cursor: 'pointer', 
+                      opacity: selectedPointData?.id && selectedPointData.id !== point.id ? 0.6 : 1,
+                      paddingBottom: '16px',
+                      paddingTop: index === 0 ? '0' : '16px' 
+                    }}
+                  >
+                    <div className="d-flex gap-2 mb-2 flex-wrap">
+                      {point.accepted_waste?.map(w => {
+                        const catData = allCategories.find(c => c.name === w.name);
+                        return (
+                          <span key={w.id} style={{ backgroundColor: catData ? catData.color : '#f1f4e9', color: '#18442A', fontSize: '11px', padding: '4px 12px', borderRadius: '12px' }}>
+                            {w.name}
+                          </span>
+                        )
+                      })}
+                    </div>
+                    <h6 className="mb-1 font-russkin" style={{ color: '#18442a', fontSize: '20px', margin: 0 }}>{point.name}</h6>
+                    <p className="mb-1 mt-1" style={{ fontSize: '13px', color: '#A0A0A0' }}>{point.address || 'Адрес не указан'}</p>
+                    <span style={{ fontSize: '12px', color: '#FF9797' }}>Закрыто</span>
                   </div>
-                  <h6 className="mb-1" style={{ color: '#18442a', fontSize: '15px', fontWeight: 700 }}>{point.name}</h6>
-                  <p className="mb-1" style={{ fontSize: '12px', color: '#A0A0A0' }}>{point.address || 'Адрес не указан'}</p>
-                  <span style={{ fontSize: '11px', color: '#FF9797' }}>Закрыто</span>
+                  
+                  <hr style={{ margin: '0 -32px', border: 'none', borderTop: '1px solid #E7EFE8', opacity: 1 }} />
                 </div>
               ))
             )}
@@ -522,41 +531,124 @@ const MapPage = () => {
                 {selectedPointData.accepted_waste?.map(w => {
                   const catData = allCategories.find(c => c.name === w.name);
                   return (
-                    <span key={w.id} style={{ backgroundColor: catData ? catData.color : '#f1f4e9', color: '#666', fontSize: '12px', padding: '6px 14px', borderRadius: '12px' }}>{w.name}</span>
+                    <span key={w.id} style={{ backgroundColor: catData ? catData.color : '#f1f4e9', color: '#18442A', fontSize: '12px', padding: '6px 14px', borderRadius: '12px' }}>{w.name}</span>
                   )
                 })}
               </div>
               <div className="w-100 mb-2 rounded" style={{ height: '220px', backgroundColor: '#e9ecef', backgroundImage: 'url(https://via.placeholder.com/480x220?text=Фото+пункта)', backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
-              <div className="d-flex gap-3 mb-4" style={{ fontSize: '13px', color: '#666' }}>
-                <span><i className="bi bi-hand-thumbs-up me-1"></i> 122</span>
-                <span><i className="bi bi-hand-thumbs-down me-1"></i> 0</span>
+              <div className="d-flex gap-3 mb-4 mt-3" style={{ fontSize: '13px', color: '#18442A' }}>
+                <span className="d-flex align-items-center"><img src="/icons/like.png" alt="Like" style={{ width: '15px', height: '15px', marginRight: '6px' }} /> 122</span>
+                <span className="d-flex align-items-center"><img src="/icons/dislike.png" alt="Dislike" style={{ width: '15px', height: '15px', marginRight: '6px' }} /> 0</span>
               </div>
               <div className="d-flex flex-column gap-3 mb-4">
                 <div>
-                  <h6 style={{ color: '#18442a', fontWeight: 700, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}><i className="bi bi-geo-alt-fill"></i> АДРЕС</h6>
-                  <p className="mb-0 ms-4" style={{ fontSize: '13px', color: '#666' }}>{selectedPointData.address || 'ул. Чайковского, 82а'}</p>
+                  <h6 className="font-russkin" style={{ color: '#18442a', fontSize: '23px', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}><img src="/icons/marker.png" alt="Address" style={{ width: '12px', height: '12px' }} /> АДРЕС</h6>
+                  <p className="mb-0 ms-4 mt-1" style={{ fontSize: '13px', color: '#18442A' }}>{selectedPointData.address || 'ул. Чайковского, 82а'}</p>
                 </div>
                 <div>
-                  <h6 style={{ color: '#18442a', fontWeight: 700, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}><i className="bi bi-clock-fill"></i> РЕЖИМ РАБОТЫ</h6>
-                  <div className="ms-4" style={{ fontSize: '13px', color: '#666', lineHeight: '1.4' }}>понедельник: 16:00 - 19:00<br/>вторник: 16:00 - 19:00<br/>среда: 16:00 - 19:00<br/>воскресенье: 10:00 - 16:00</div>
+                  <h6 className="font-russkin" style={{ color: '#18442a', fontSize: '23px', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}><img src="/icons/clock.png" alt="Time" style={{ width: '12px', height: '12px' }} /> РЕЖИМ РАБОТЫ</h6>
+                  <div className="ms-4 mt-1" style={{ fontSize: '13px', color: '#18442A', lineHeight: '1.4' }}>понедельник: 16:00 - 19:00<br/>вторник: 16:00 - 19:00<br/>среда: 16:00 - 19:00<br/>воскресенье: 10:00 - 16:00</div>
+                </div>
+                
+                {/* Контакты */}
+                <div className="mt-2 d-flex flex-column gap-2">
+                  <div className="d-flex align-items-center gap-2" style={{ fontSize: '13px', color: '#18442A' }}>
+                    <img src="/icons/planet.png" alt="Website" style={{ width: '10px', height: '10px', marginLeft: '1px' }} /> <span>uralvtorma.ru</span>
+                  </div>
+                  <div className="d-flex align-items-center gap-2" style={{ fontSize: '13px', color: '#18442A' }}>
+                    <img src="/icons/plane.png" alt="VK" style={{ width: '10px', height: '10px', marginLeft: '1px' }} /> <span>vk.com/club206427178</span>
+                  </div>
+                  <div className="d-flex align-items-center gap-2" style={{ fontSize: '13px', color: '#18442A' }}>
+                    <img src="/icons/phone.png" alt="Phone" style={{ width: '10px', height: '10px', marginLeft: '1px' }} /> <span>+7 (904) 382-31-30</span>
+                  </div>
                 </div>
               </div>
-              <h6 style={{ color: '#18442a', fontWeight: 700, fontSize: '14px', textTransform: 'uppercase' }}>ОПИСАНИЕ</h6>
-              <p style={{ fontSize: '13px', color: '#666', lineHeight: '1.5', marginBottom: '24px' }}>Наша компания принимает макулатуру, пластик и плёнку на самых выгодных условиях. Вывоз макулатуры в Екатеринбурге. Сохраним экологию вместе.</p>
-              <h6 style={{ color: '#18442a', fontWeight: 700, fontSize: '14px', textTransform: 'uppercase', marginBottom: '16px' }}>КОММЕНТАРИИ</h6>
-              <div className="d-flex flex-column gap-3 mb-3">
+              
+              <h6 className="font-russkin" style={{ color: '#18442a', fontSize: '23px', textTransform: 'uppercase', margin: '0 0 8px 0' }}>ОПИСАНИЕ</h6>
+              <p style={{ fontSize: '13px', color: '#18442A', lineHeight: '1.5', marginBottom: '32px' }}>Наша компания принимает макулатуру, пластик и плёнку на самых выгодных условиях. Наша компания осуществляет: - Прием макулатуры в Екатеринбурге - Вывоз макулатуры в Екатеринбурге - Уничтожение макулатуры путем переработки.</p>
+              
+              {/* Линия от края до края перед ЦЕНАМИ */}
+              <hr style={{ margin: '0 -32px 32px -32px', border: 'none', borderTop: '1px solid #E7EFE8', opacity: 1 }} />
+
+              {/* ЦЕНЫ (пока заглушка, как в Фигме) */}
+              <h6 className="font-russkin" style={{ color: '#18442a', fontSize: '23px', textTransform: 'uppercase', margin: '0 0 12px 0' }}>ЦЕНЫ</h6>
+              <div className="row g-3 mb-4">
+                 <div className="col-6">
+                    <span style={{ backgroundColor: '#CDE5FD', color: '#18442A', fontSize: '12px', padding: '4px 12px', borderRadius: '12px' }}>Пластик</span>
+                    <div className="mt-2" style={{ fontSize: '11px', color: '#18442A', lineHeight: '1.3' }}>Ящик для фруктов б/у - от 3 руб./кг;<br/>ПВД, прозрачная - от 15 руб./кг;<br/>Стрейч, прозрачная - от 17 руб./кг;<br/>Микс (ПВД + стрейч), прозрачная - от 12 руб./кг;</div>
+                    
+                    <div className="mt-3"><span style={{ backgroundColor: '#FFC8C8', color: '#18442A', fontSize: '12px', padding: '4px 12px', borderRadius: '12px' }}>Бумага</span></div>
+                    <div className="mt-2" style={{ fontSize: '11px', color: '#18442A', lineHeight: '1.3' }}>МН-7Б (книги, журналы, тетради) - от 7 руб./кг<br/>МН-8В (газеты, газетная бумага) - от 11 руб./кг<br/>МН-5Б (картон) - от 4 руб./кг<br/>МН-6Б (хром-эрзац) - от 4 руб./кг<br/>МН-7Б/1 (архивы) - от 10 руб./кг<br/>МН-13В (смешанная) - от 2 руб./кг</div>
+                 </div>
+                 <div className="col-6">
+                    <span style={{ backgroundColor: '#F8F6B7', color: '#18442A', fontSize: '12px', padding: '4px 12px', borderRadius: '12px' }}>Крышки</span>
+                    <div className="mt-2 mb-3" style={{ fontSize: '11px', color: '#18442A', lineHeight: '1.3' }}>HDPE, PE-HD, PE - 20 руб./кг</div>
+                    
+                    <div className="mt-3"><span style={{ backgroundColor: '#C4C2FF', color: '#18442A', fontSize: '12px', padding: '4px 12px', borderRadius: '12px' }}>Металл</span></div>
+                    <div className="mt-2" style={{ fontSize: '11px', color: '#18442A', lineHeight: '1.3' }}>Чугун - 17 руб./кг<br/>Оцинковка - 17 руб./кг<br/>Дюраль - 100 руб./кг<br/>Сталь 5А - 17 руб./кг</div>
+                 </div>
+              </div>
+
+              {/* Линия от края до края перед КОММЕНТАРИЯМИ */}
+              <hr style={{ margin: '32px -32px 32px -32px', border: 'none', borderTop: '1px solid #E7EFE8', opacity: 1 }} />
+
+              <h6 className="font-russkin" style={{ color: '#18442a', fontSize: '23px', textTransform: 'uppercase', margin: '0 0 24px 0' }}>КОММЕНТАРИИ</h6>
+              <div className="d-flex flex-column gap-4 mb-3">
+                {/* Комментарий 1 */}
                 <div>
                   <div className="d-flex align-items-center gap-2 mb-1">
                     <div className="rounded-circle" style={{ width: '28px', height: '28px', backgroundColor: '#F4F6E3' }}></div>
                     <div>
                       <div style={{ fontSize: '13px', color: '#18442a', fontWeight: 600 }}>Брэд Питт</div>
-                      <div style={{ fontSize: '10px', color: '#A0A0A0' }}>11 апреля 2026</div>
+                      <div style={{ fontSize: '10px', color: '#18442A' }}>11 апреля 2026</div>
                     </div>
                   </div>
-                  <p style={{ fontSize: '13px', color: '#666', margin: 0, paddingLeft: '36px' }}>Правило номер один: не говорить о приёме вторсырья.</p>
+                  <p style={{ fontSize: '13px', color: '#18442A', margin: 0, paddingLeft: '36px' }}>Правило номер один: не говорить о приёме вторсырья. Правило номер два: НИКОГДА НЕ ГОВОРИТЬ О ПРИЕМЕ ВТОРСЫРЬЯ.</p>
+                </div>
+                {/* Комментарий 2 */}
+                <div>
+                  <div className="d-flex align-items-center gap-2 mb-1">
+                    <div className="rounded-circle" style={{ width: '28px', height: '28px', backgroundColor: '#F4F6E3' }}></div>
+                    <div>
+                      <div style={{ fontSize: '13px', color: '#18442a', fontWeight: 600 }}>Дональд Трамп</div>
+                      <div style={{ fontSize: '10px', color: '#18442A' }}>1 февраля 2026</div>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: '13px', color: '#18442A', margin: 0, paddingLeft: '36px' }}>Make вторсырье great again!</p>
+                </div>
+                {/* Комментарий 3 */}
+                <div>
+                  <div className="d-flex align-items-center gap-2 mb-1">
+                    <div className="rounded-circle" style={{ width: '28px', height: '28px', backgroundColor: '#F4F6E3' }}></div>
+                    <div>
+                      <div style={{ fontSize: '13px', color: '#18442a', fontWeight: 600 }}>Eminem</div>
+                      <div style={{ fontSize: '10px', color: '#18442A' }}>13 ноября 2025</div>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: '13px', color: '#18442A', margin: 0, paddingLeft: '36px' }}>Заплатили копейки, но хоть не потерял себя. Мама, я сдал мусор.</p>
                 </div>
               </div>
-              <button className="btn w-100 rounded-pill" style={{ backgroundColor: '#F4F6E3', color: '#18442a', fontSize: '13px', fontWeight: 500 }}>Оставить комментарий</button>
+              <div className="text-center mb-4 mt-4">
+                <span style={{ fontSize: '12px', color: '#6BAD86', cursor: 'pointer', fontWeight: 500 }}>Показать все комментарии (3)</span>
+              </div>
+              
+              <button className="btn w-100 rounded-pill mb-4" style={{ backgroundColor: '#F4F6E3', color: '#18442a', fontSize: '13px', fontWeight: 500 }}>Оставить комментарий</button>
+              
+              {/* Линия от края до края перед ФУТЕРОМ */}
+              <hr style={{ margin: '32px -32px 0 -32px', border: 'none', borderTop: '1px solid #E7EFE8', opacity: 1 }} />
+
+              {/* ФУТЕР ПАНЕЛИ (Модератор и исправление) */}
+              <div className="d-flex justify-content-between align-items-center pt-3" style={{ paddingBottom: '8px' }}>
+                <div className="d-flex align-items-center gap-2" style={{ fontSize: '11px', color: '#18442A' }}>
+                  <img src="/icons/person.png" alt="Moderator" style={{ width: '10px', height: '10px' }} />
+                  <span>Модератор точки: kolyakorobov@gmail.com</span>
+                </div>
+                <div className="d-flex align-items-center gap-1" style={{ fontSize: '11px', color: '#6BAD86', cursor: 'pointer', fontWeight: 500 }}>
+                  <span>Предложить исправление</span>
+                  <img src="/icons/pencil.png" alt="Edit" style={{ width: '10px', height: '10px' }} />
+                </div>
+              </div>
+
             </div>
           )}
 
