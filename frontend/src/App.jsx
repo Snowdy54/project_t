@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { YMaps, Map, Placemark, ZoomControl, GeolocationControl } from '@pbe/react-yandex-maps';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import './App.css';
 import axios from 'axios';
@@ -229,63 +230,153 @@ const MapPage = () => {
   const [points, setPoints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Новые состояния для фильтров
+  const [wastes, setWastes] = useState([]); // Список всех существующих типов мусора (для кнопок)
+  const [activeFilter, setActiveFilter] = useState(null); // Текущий выбранный фильтр (null = "Все")
 
   useEffect(() => {
-    // Используем axios вместо fetch
-    axios.get('http://127.0.0.1:8000/api/points/')
+    // 1. Загружаем все точки
+    fetch('http://127.0.0.1:8000/api/points/')
       .then(response => {
-        console.log('Данные от бэкенда:', response.data);
-        setPoints(response.data); // В axios данные лежат в свойстве .data
+        if (!response.ok) throw new Error('Ошибка сети');
+        return response.json();
+      })
+      .then(data => {
+        setPoints(data);
+        
+        // 2. Извлекаем уникальные типы вторсырья из полученных точек
+        // Проходим по всем точкам, собираем их accepted_waste в один массив и убираем дубликаты по имени
+        const allWastes = [];
+        const wasteNames = new Set();
+        
+        data.forEach(point => {
+          if (point.accepted_waste) {
+            point.accepted_waste.forEach(waste => {
+              if (!wasteNames.has(waste.name)) {
+                wasteNames.add(waste.name);
+                allWastes.push(waste);
+              }
+            });
+          }
+        });
+        
+        setWastes(allWastes);
         setLoading(false);
       })
       .catch(error => {
-        console.error('Ошибка при получении данных:', error);
-        // Красиво выводим текст ошибки
+        console.error('Ошибка:', error);
         setError(error.message);
         setLoading(false);
       });
   }, []);
 
+  // Фильтруем точки перед отрисовкой
+  // Оставляем только те точки, у которых в accepted_waste есть мусор с именем activeFilter
+  const filteredPoints = activeFilter 
+    ? points.filter(point => 
+        point.accepted_waste?.some(waste => waste.name === activeFilter)
+      )
+    : points; // Если фильтр не выбран, показываем все
+
   return (
-    <div className="container-fluid mt-5 text-center" style={{ minHeight: '60vh' }}>
-      <h2 className="font-russkin mb-4" style={{ color: '#18442a' }}>ПУНКТЫ ПРИЕМА (ТЕСТ API)</h2>
+    <div className="container-fluid mt-4 mb-5" style={{ height: '80vh', paddingLeft: '80px', paddingRight: '80px' }}>
+      <h2 className="font-russkin mb-4" style={{ color: '#18442a', fontSize: '2.5rem' }}>КАРТА ПУНКТОВ ПРИЕМА</h2>
       
-      {loading && <div className="spinner-border text-success" role="status"><span className="visually-hidden">Загрузка...</span></div>}
-      
-      {error && (
-        <div className="alert alert-danger mx-auto" style={{ maxWidth: '600px' }}>
-          <strong>Ошибка связи с бэкендом:</strong> {error}
-          <br/>Убедитесь, что сервер Django запущен на порту 8000.
+      {/* ПАНЕЛЬ ФИЛЬТРОВ */}
+      {!loading && !error && wastes.length > 0 && (
+        <div className="d-flex flex-wrap gap-2 mb-3">
+          <button 
+            className={`btn rounded-pill px-4 shadow-sm ${activeFilter === null ? 'active-filter' : 'inactive-filter'}`}
+            style={{
+              backgroundColor: activeFilter === null ? '#18442a' : '#f1f4e9',
+              color: activeFilter === null ? '#ffffff' : '#18442a',
+              border: 'none',
+              fontSize: '14px',
+              fontWeight: activeFilter === null ? 700 : 400
+            }}
+            onClick={() => setActiveFilter(null)}
+          >
+            Все
+          </button>
+          
+          {wastes.map(waste => (
+            <button 
+              key={waste.id || waste.name}
+              className={`btn rounded-pill px-4 shadow-sm ${activeFilter === waste.name ? 'active-filter' : 'inactive-filter'}`}
+              style={{
+                backgroundColor: activeFilter === waste.name ? '#18442a' : '#f1f4e9',
+                color: activeFilter === waste.name ? '#ffffff' : '#18442a',
+                border: 'none',
+                fontSize: '14px',
+                fontWeight: activeFilter === waste.name ? 700 : 400
+              }}
+              onClick={() => setActiveFilter(waste.name)}
+            >
+              {waste.name}
+            </button>
+          ))}
         </div>
       )}
-      
+
+      {loading && <div className="text-center"><div className="spinner-border text-success"></div></div>}
+      {error && <div className="alert alert-danger text-center mx-auto" style={{maxWidth: '600px'}}>{error}</div>}
+
       {!loading && !error && (
-        <div className="d-flex flex-wrap justify-content-center gap-4 mt-4">
-          {points.length === 0 ? (
-            <p>Пунктов пока нет. Добавьте их через админку Django!</p>
-          ) : (
-            points.map((point) => (
-              <div key={point.id} className="card p-4 shadow-sm border-0" style={{ width: '350px', textAlign: 'left', borderRadius: '20px', backgroundColor: '#f1f4e9' }}>
-                <h5 className="font-russkin" style={{ color: '#18442a', fontSize: '1.2rem' }}>
-                  {point.name || 'Название пункта'}
-                </h5>
-                <p className="mb-2" style={{ fontSize: '0.9rem', color: '#18442a' }}>
-                  <strong>Адрес:</strong> {point.address || 'Адрес не указан'}
-                </p>
-                {point.latitude && point.longitude && (
-                  <p className="mb-3" style={{ fontSize: '0.8rem', color: '#666' }}>
-                    Координаты: {point.latitude}, {point.longitude}
-                  </p>
-                )}
-                
-                <div className="mt-auto p-2" style={{ backgroundColor: '#e8eedf', borderRadius: '10px', fontSize: '0.75rem', overflowX: 'auto' }}>
-                  <pre className="m-0" style={{ color: '#18442a' }}>
-                    {JSON.stringify(point, null, 2)}
-                  </pre>
-                </div>
-              </div>
-            ))
-          )}
+        <div className="w-100 shadow-sm rounded overflow-hidden" style={{ height: 'calc(100% - 100px)', border: '2px solid #E7EFE8', borderRadius: '20px' }}>
+          <YMaps query={{ apikey: "cd6e05b5-779b-4303-b21c-f9534e4a4a39" }}>
+            <Map 
+              defaultState={{ 
+                center: [55.751574, 37.573856],
+                zoom: 10,
+                controls: []
+              }} 
+              width="100%" 
+              height="100%"
+            >
+              <ZoomControl options={{ float: "right" }} />
+              <GeolocationControl options={{ float: "left" }} />
+
+              {/* Отрисовываем уже отфильтрованный массив filteredPoints */}
+              {filteredPoints.map((point) => {
+                const lat = point.coordinates?.lat || point.latitude || point.coordinates?.[0];
+                const lng = point.coordinates?.lng || point.longitude || point.coordinates?.[1];
+
+                if (!lat || !lng) return null;
+
+                const wasteTags = point.accepted_waste?.map(waste => 
+                  `<span style="display: inline-block; background-color: #f1f4e9; color: #18442a; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-right: 4px; margin-bottom: 4px;">
+                    ${waste.name}
+                  </span>`
+                ).join('') || 'Нет данных о вторсырье';
+
+                return (
+                  <Placemark 
+                    key={point.id || point.name}
+                    geometry={[parseFloat(lat), parseFloat(lng)]}
+                    properties={{
+                      balloonContentHeader: `<strong style="color: #18442a; font-size: 16px;">${point.name}</strong>`,
+                      balloonContentBody: `
+                        <div style="margin-bottom: 8px;">
+                          <span style="color: #666; font-size: 13px;">Адрес:</span><br/>
+                          <span style="font-size: 14px;">${point.address || 'Не указан'}</span>
+                        </div>
+                        <div>
+                          <span style="color: #666; font-size: 13px; display: block; margin-bottom: 4px;">Принимают:</span>
+                          ${wasteTags}
+                        </div>
+                      `,
+                      hintContent: point.name
+                    }}
+                    options={{
+                      preset: 'islands#darkGreenIcon',
+                    }}
+                    modules={['geoObject.addon.balloon', 'geoObject.addon.hint']}
+                  />
+                );
+              })}
+            </Map>
+          </YMaps>
         </div>
       )}
     </div>
