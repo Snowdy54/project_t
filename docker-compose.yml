@@ -1,20 +1,37 @@
 services:
+  db:
+    image: postgres:15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: project_db
+      POSTGRES_USER: postgres_user
+      POSTGRES_PASSWORD: postgres_pass
+    ports:
+      - "5432:5432"
   backend:
     build: .
+    depends_on:
+      - db
     volumes:
       - .:/app
     ports:
       - "8000:8000"
+    environment:
+      DB_NAME: project_db
+      DB_USER: postgres_user
+      DB_PASS: postgres_pass
+      DB_HOST: db
+      DB_PORT: 5432
 
-# ЗАГОТОВКА
   frontend:
     build: ./frontend
     volumes:
       - ./frontend:/app
       - /app/node_modules
     ports:
-      - "5173:5173" # Порт по умолчанию для Vite (или 3000 для CRA)
+      - "5174:5173"
     stdin_open: true
 
 volumes:
-  sqlite_data:
+  postgres_data:

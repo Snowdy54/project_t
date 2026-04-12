@@ -41,6 +41,7 @@
 * `python manage.py runserver` — запуск Django локально.
 * `cd frontend && npm run dev` — запуск React (Vite) из папки фронтенда.
 * `pip freeze > requirements.txt` - обновить или создать файл requirements.txt
+* `python manage.py migrate`
 
 ---
 
