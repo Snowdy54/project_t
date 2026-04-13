@@ -51,3 +51,55 @@ body {
   padding: 0;
   text-align: left;
 }
+
+/* 1. Делаем подложку балуна прозрачной, чтобы не мешали стандартные тени и отступы */
+.ymaps-2-1-79-balloon {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* 2. Убиваем стандартный внутренний контейнер Яндекса, чтобы он не добавлял отступы */
+.ymaps-2-1-79-balloon__content {
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+}
+
+/* 3. НАШ КРАСИВЫЙ БАЛУН (который мы написали в App.jsx) */
+.custom-balloon {
+  position: relative;
+  background-color: #ffffff;
+  border: 1px solid #18442A;
+  border-radius: 8px;
+  padding: 8px 24px;
+  color: #18442A;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: 'Actay', sans-serif;
+  text-align: center;
+  white-space: nowrap;
+  
+  /* Хитрый трюк, чтобы сместить наш балун ровно по центру над иконкой */
+  transform: translateX(calc(-50% + 15px)); 
+}
+
+/* 4. Рисуем красивый хвостик от нашего балуна */
+.custom-balloon::after {
+  content: '';
+  position: absolute;
+  bottom: -6px; /* Опускаем наполовину ниже балуна */
+  left: 50%;
+  margin-left: -5px; /* Выравниваем ровно по центру */
+  width: 10px;
+  height: 10px;
+  background-color: #ffffff;
+  border-right: 1px solid #18442A;
+  border-bottom: 1px solid #18442A;
+  transform: rotate(45deg);
+}
+
+/* 5. Полностью скрываем стандартный кривой хвостик Яндекса */
+.ymaps-2-1-79-balloon__tail {
+  display: none !important;
+}
