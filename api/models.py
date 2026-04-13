@@ -6,7 +6,6 @@ from geopy.geocoders import Yandex
 
 
 class User(AbstractUser):
-    is_business = models.BooleanField(default=False, verbose_name="Представитель бизнеса")
 
     def __str__(self):
         return self.username

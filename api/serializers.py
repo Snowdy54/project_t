@@ -21,7 +21,10 @@ class PointSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Point
-        fields = ['id', 'name', 'address', 'latitude', 'longitude', 'status', 'prices']
+        fields = [
+            'id', 'name', 'address', 'latitude', 'longitude', 
+            'status', 'inn', 'legal_entity', 'prices'
+        ]
 
 class UserProfileSerializer(serializers.ModelSerializer):
     points = PointSerializer(many=True, read_only=True)
