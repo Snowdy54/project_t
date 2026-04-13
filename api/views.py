@@ -1,14 +1,20 @@
-from rest_framework import viewsets, permissions as drf_permissions, exceptions
-from django_filters.rest_framework import DjangoFilterBackend
-from .models import Point, PointWastePrice
-from .serializers import PointSerializer, PointWastePriceSerializer, User
-from .permissions import IsPointOwner
+from rest_framework import viewsets, exceptions, generics, status
+from rest_framework import permissions as drf_permissions # Ты импортировал как drf_permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .serializers import UserProfileSerializer
-from rest_framework import generics
-from rest_framework.permissions import AllowAny
-from .serializers import RegisterSerializer
+from rest_framework.permissions import AllowAny, IsAuthenticated # Добавь прямой импорт сюда
+from django_filters.rest_framework import DjangoFilterBackend
+
+from .models import Point, PointWastePrice
+from .serializers import (
+    PointSerializer, 
+    PointWastePriceSerializer, 
+    UserProfileSerializer, 
+    RegisterSerializer, 
+    ChangePasswordSerializer,
+    User
+)
+from .permissions import IsPointOwner
 
 
 class UserProfileView(APIView):
@@ -45,3 +51,16 @@ class RegisterView(generics.CreateAPIView):
     # К этой "двери" доступ есть у всех, даже без токена
     permission_classes = [AllowAny]
     serializer_class = RegisterSerializer
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated] 
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            user = request.user
+            user.set_password(serializer.validated_data['new_password'])
+            user.save()
+            return Response({"message": "Пароль успешно изменен"}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
