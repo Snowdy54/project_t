@@ -1,11 +1,15 @@
 from rest_framework import viewsets, permissions as drf_permissions, exceptions
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Point, PointWastePrice
-from .serializers import PointSerializer, PointWastePriceSerializer
+from .serializers import PointSerializer, PointWastePriceSerializer, User
 from .permissions import IsPointOwner
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .serializers import UserProfileSerializer
+from rest_framework import generics
+from rest_framework.permissions import AllowAny
+from .serializers import RegisterSerializer
+
 
 class UserProfileView(APIView):
     permission_classes = [drf_permissions.IsAuthenticated]
@@ -35,3 +39,9 @@ class PointWastePriceViewSet(viewsets.ModelViewSet):
         if point.owner != self.request.user:
             raise exceptions.PermissionDenied("Вы не можете устанавливать цены для чужого пункта.")
         serializer.save()
+
+class RegisterView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    # К этой "двери" доступ есть у всех, даже без токена
+    permission_classes = [AllowAny]
+    serializer_class = RegisterSerializer

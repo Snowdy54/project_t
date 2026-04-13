@@ -24,12 +24,29 @@ class Point(models.Model):
     latitude = models.FloatField(verbose_name="Широта", blank=True, null=True)
     longitude = models.FloatField(verbose_name="Долгота", blank=True, null=True)
     accepted_waste = models.ManyToManyField('WasteType', related_name='points', verbose_name="Принимаемые отходы")
-    owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL, 
-        on_delete=models.CASCADE, 
-        related_name='points',
-        verbose_name="Владелец пункта"
+
+    STATUS_CHOICES = [
+        ('pending', 'На модерации'),
+        ('approved', 'Одобрено'),
+        ('rejected', 'Отклонено'),
+    ]
+    status = models.CharField(
+        max_length=10, choices=STATUS_CHOICES, default='pending', verbose_name='Статус'
     )
+
+    # Владелец теперь может быть null (если точку добавил прохожий)
+    owner = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='points',
+        verbose_name='Владелец бизнеса'
+    )
+
+    # Юридические данные (заполняются только если человек претендует на точку)
+    inn = models.CharField(max_length=12, null=True, blank=True, verbose_name='ИНН')
+    legal_entity = models.CharField(max_length=255, null=True, blank=True, verbose_name='ИП / ООО')
 
     def save(self, *args, **kwargs):
         if not self.latitude or not self.longitude:

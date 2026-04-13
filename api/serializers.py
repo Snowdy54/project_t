@@ -21,12 +21,31 @@ class PointSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Point
-        fields = ['id', 'name', 'address', 'latitude', 'longitude', 'prices']
+        fields = ['id', 'name', 'address', 'latitude', 'longitude', 'status', 'prices']
 
 class UserProfileSerializer(serializers.ModelSerializer):
     points = PointSerializer(many=True, read_only=True)
 
     class Meta:
         model = User
-        # Заменяем 'role' на 'is_business'
-        fields = ['id', 'username', 'email', 'is_business', 'points']
+        fields = ['id', 'username', 'email', 'points']
+
+
+class RegisterSerializer(serializers.ModelSerializer):
+    # Пароль только для записи, в ответах API его не будет видно
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ('username', 'password', 'email', 'first_name', 'last_name')
+
+    def create(self, validated_data):
+        # Метод create_user автоматически зашифрует пароль
+        user = User.objects.create_user(
+            username=validated_data['username'],
+            password=validated_data['password'],
+            email=validated_data.get('email', ''),
+            first_name=validated_data.get('first_name', ''),
+            last_name=validated_data.get('last_name', ''),
+        )
+        return user
