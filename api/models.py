@@ -6,6 +6,7 @@ from geopy.geocoders import Yandex
 
 
 class User(AbstractUser):
+    avatar = models.ImageField(upload_to='avatars/', null=True, blank=True, verbose_name="Аватар")
 
     def __str__(self):
         return self.username
