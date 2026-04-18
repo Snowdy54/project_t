@@ -1,9 +1,8 @@
-from django.db import models
+from django.contrib.gis.db import models
 from django.contrib.auth.models import AbstractUser
-from django.db import models
 from core import settings
 from geopy.geocoders import Yandex
-
+from django.contrib.gis.geos import Point as GEOSPoint
 
 class User(AbstractUser):
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True, verbose_name="Аватар")
@@ -21,8 +20,19 @@ class WasteType(models.Model):
 class Point(models.Model):
     name = models.CharField(max_length=255, verbose_name="Название")
     address = models.CharField(max_length=500, verbose_name="Адрес")
+    
+    location = models.PointField(
+        verbose_name="Координаты (локация)",
+        null=True, 
+        blank=True,
+        srid=4326 # Стандартная система координат (WGS84)
+    )
+    
+    # Оставляем latitude/longitude как вспомогательные свойства, 
+    # чтобы не ломать текущий фронтенд
     latitude = models.FloatField(verbose_name="Широта", blank=True, null=True)
     longitude = models.FloatField(verbose_name="Долгота", blank=True, null=True)
+    
     accepted_waste = models.ManyToManyField('WasteType', related_name='points', verbose_name="Принимаемые отходы")
     description = models.TextField(verbose_name="Описание (общая информация)", blank=True, null=True)
     phone = models.CharField(max_length=20, verbose_name="Телефон для связи", blank=True, null=True)
@@ -44,7 +54,6 @@ class Point(models.Model):
         max_length=10, choices=STATUS_CHOICES, default='pending', verbose_name='Статус'
     )
 
-    # Владелец теперь может быть null (если точку добавил прохожий)
     owner = models.ForeignKey(
         User, 
         on_delete=models.SET_NULL, 
@@ -54,20 +63,24 @@ class Point(models.Model):
         verbose_name='Владелец бизнеса'
     )
 
-    # Юридические данные (заполняются только если человек претендует на точку)
     inn = models.CharField(max_length=12, null=True, blank=True, verbose_name='ИНН')
     legal_entity = models.CharField(max_length=255, null=True, blank=True, verbose_name='ИП / ООО')
 
     def save(self, *args, **kwargs):
+        # Если координат нет, пробуем получить их через Яндекс
         if not self.latitude or not self.longitude:
             try:
                 geolocator = Yandex(api_key='b3a0ce03-2358-422e-90a5-4ab3331d93c6')
-                location = geolocator.geocode(self.address)
-                if location:
-                    self.latitude = location.latitude
-                    self.longitude = location.longitude
+                location_data = geolocator.geocode(self.address)
+                if location_data:
+                    self.latitude = location_data.latitude
+                    self.longitude = location_data.longitude
             except Exception as e:
                 print(f"Ошибка геокодирования: {e}")
+        
+        # Если координаты появились, обновляем поле location для PostGIS
+        if self.latitude and self.longitude:
+            self.location = GEOSPoint(self.longitude, self.latitude)
         
         super().save(*args, **kwargs)
 

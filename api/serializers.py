@@ -18,14 +18,26 @@ class PointWastePriceSerializer(serializers.ModelSerializer):
 
 class PointSerializer(serializers.ModelSerializer):
     prices = PointWastePriceSerializer(many=True, read_only=True)
+    # Добавляем метод для красивого вывода координат фронтенду
+    coords = serializers.SerializerMethodField()
 
     class Meta:
         model = Point
         fields = [
             'id', 'name', 'address', 'latitude', 'longitude', 
+            'location', 'coords', # Новые поля
             'status', 'inn', 'legal_entity', 'prices',
             'working_hours', 'phone', 'description' 
         ]
+
+    def get_coords(self, obj):
+        # Если точка в базе есть, возвращаем объект с долготой и широтой
+        if obj.location:
+            return {
+                "lng": obj.location.x,
+                "lat": obj.location.y
+            }
+        return None
 
 class UserProfileSerializer(serializers.ModelSerializer):
     points = PointSerializer(many=True, read_only=True)
