@@ -9,7 +9,6 @@ services:
       POSTGRES_PASSWORD: postgres_pass
     ports:
       - "5432:5432"
-
   backend:
     build: .
     depends_on:
