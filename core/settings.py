@@ -82,10 +82,10 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.contrib.gis.db.backends.postgis', # Движок для PostGIS
-        'NAME': os.environ.get('DB_NAME', 'recycling_db'),
-        'USER': os.environ.get('DB_USER', 'andrey'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'your_secure_password'),
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'NAME': os.environ.get('DB_NAME', 'project_db'),
+        'USER': os.environ.get('DB_USER', 'postgres_user'),
+        'PASSWORD': os.environ.get('DB_PASS', 'postgres_pass'),
         'HOST': os.environ.get('DB_HOST', 'db'),
         'PORT': os.environ.get('DB_PORT', '5432'),
     }

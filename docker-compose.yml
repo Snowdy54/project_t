@@ -1,27 +1,29 @@
 services:
   db:
-    image: postgis/postgis:15-3.3
+    image: postgis/postgis:15-3.3 
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_DB=recycling_db
-      - POSTGRES_USER=andrey
-      - POSTGRES_PASSWORD=your_secure_password
+      POSTGRES_DB: project_db
+      POSTGRES_USER: postgres_user
+      POSTGRES_PASSWORD: postgres_pass
+    ports:
+      - "5432:5432"
 
   backend:
     build: .
+    depends_on:
+      - db
     volumes:
       - .:/app
     ports:
       - "8000:8000"
     environment:
-      - DB_NAME=recycling_db
-      - DB_USER=andrey
-      - DB_PASSWORD=your_secure_password
-      - DB_HOST=db
-      - DB_PORT=5432
-    depends_on:
-      - db
+      DB_NAME: project_db
+      DB_USER: postgres_user
+      DB_PASS: postgres_pass
+      DB_HOST: db
+      DB_PORT: 5432
 
   frontend:
     build: ./frontend
@@ -29,7 +31,7 @@ services:
       - ./frontend:/app
       - /app/node_modules
     ports:
-      - "5173:5173"
+      - "5174:5173"
     stdin_open: true
 
 volumes:
