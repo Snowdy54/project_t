@@ -1,20 +1,36 @@
 services:
+  db:
+    image: postgis/postgis:15-3.3
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=recycling_db
+      - POSTGRES_USER=andrey
+      - POSTGRES_PASSWORD=your_secure_password
+
   backend:
     build: .
     volumes:
       - .:/app
     ports:
       - "8000:8000"
+    environment:
+      - DB_NAME=recycling_db
+      - DB_USER=andrey
+      - DB_PASSWORD=your_secure_password
+      - DB_HOST=db
+      - DB_PORT=5432
+    depends_on:
+      - db
 
-# ЗАГОТОВКА
   frontend:
     build: ./frontend
     volumes:
       - ./frontend:/app
       - /app/node_modules
     ports:
-      - "5173:5173" # Порт по умолчанию для Vite (или 3000 для CRA)
+      - "5173:5173"
     stdin_open: true
 
 volumes:
-  sqlite_data:
+  postgres_data:

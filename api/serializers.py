@@ -14,7 +14,7 @@ class PointWastePriceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PointWastePrice
-        fields = ['id', 'waste_type', 'waste_type_name', 'price_per_kg']
+        fields = ['id', 'waste_type', 'waste_type_name', 'price_per_kg', 'unit', 'is_available']
 
 class PointSerializer(serializers.ModelSerializer):
     prices = PointWastePriceSerializer(many=True, read_only=True)
@@ -23,7 +23,8 @@ class PointSerializer(serializers.ModelSerializer):
         model = Point
         fields = [
             'id', 'name', 'address', 'latitude', 'longitude', 
-            'status', 'inn', 'legal_entity', 'prices'
+            'status', 'inn', 'legal_entity', 'prices',
+            'working_hours', 'phone', 'description' 
         ]
 
 class UserProfileSerializer(serializers.ModelSerializer):

@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-!s(rmaa)jj3lnk#bj=q3h3sx*%rlpr63)$-%t(g8z1&4en$n%p
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['*', 'backend', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'corsheaders',
+    'django.contrib.gis',
 ]
 
 MIDDLEWARE = [
@@ -81,8 +82,12 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.contrib.gis.db.backends.postgis', # Движок для PostGIS
+        'NAME': os.environ.get('DB_NAME', 'recycling_db'),
+        'USER': os.environ.get('DB_USER', 'andrey'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'your_secure_password'),
+        'HOST': os.environ.get('DB_HOST', 'db'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
     }
 }
 
@@ -155,3 +160,5 @@ SIMPLE_JWT = {
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+CORS_ALLOW_ALL_ORIGINS = True
