@@ -25,11 +25,9 @@ class Point(models.Model):
         verbose_name="Координаты (локация)",
         null=True, 
         blank=True,
-        srid=4326 # Стандартная система координат (WGS84)
+        srid=4326 # Система координат (WGS84)
     )
     
-    # Оставляем latitude/longitude как вспомогательные свойства, 
-    # чтобы не ломать текущий фронтенд
     latitude = models.FloatField(verbose_name="Широта", blank=True, null=True)
     longitude = models.FloatField(verbose_name="Долгота", blank=True, null=True)
     
@@ -42,7 +40,7 @@ class Point(models.Model):
         blank=True,
         null=True,
         default=dict,
-        help_text="Пример: {'пн': '08:00-20:00', 'сб': '10:00-15:00', 'вс': 'выходной'}"
+        help_text="Пример: {''пн'': ''08:00-20:00'', ''сб'': ''10:00-15:00'', ''вс'': ''выходной''} (Использовать двойные кавычки)"
     )
 
     STATUS_CHOICES = [
@@ -67,7 +65,7 @@ class Point(models.Model):
     legal_entity = models.CharField(max_length=255, null=True, blank=True, verbose_name='ИП / ООО')
 
     def save(self, *args, **kwargs):
-        # Если координат нет, пробуем получить их через Яндекс
+        # Яндекс
         if not self.latitude or not self.longitude:
             try:
                 geolocator = Yandex(api_key='b3a0ce03-2358-422e-90a5-4ab3331d93c6')
@@ -78,7 +76,7 @@ class Point(models.Model):
             except Exception as e:
                 print(f"Ошибка геокодирования: {e}")
         
-        # Если координаты появились, обновляем поле location для PostGIS
+        # поле location для PostGIS
         if self.latitude and self.longitude:
             self.location = GEOSPoint(self.longitude, self.latitude)
         
@@ -104,7 +102,6 @@ class PointWastePrice(models.Model):
     is_available = models.BooleanField(default=True, verbose_name="Принимается сейчас")
 
     class Meta:
-        # Убираем unique_together, если хотим разрешить разные цены на разные предметы одного типа (пластик-ящик и пластик-бутылка)
         verbose_name = "Цена на отход"
         verbose_name_plural = "Цены на отходы"
 
