@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import './App.css';
 import axios from 'axios';
+import { authService } from './api/services';
 
 const Home = () => {
   // Состояние для открытия/закрытия дополнительного текста "Читать подробнее"
@@ -1441,18 +1442,67 @@ const CustomNavbar = () => {
 };
 
 function App() {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+
+  // При первой загрузке сайта проверяем, вошел ли пользователь ранее
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        setIsLoadingAuth(false);
+        return;
+      }
+      try {
+        const userProfile = await authService.getProfile();
+        setCurrentUser(userProfile);
+      } catch (error) {
+        // Токен невалидный или протух — разлогиниваем
+        authService.logout();
+        setCurrentUser(null);
+      } finally {
+        setIsLoadingAuth(false);
+      }
+    };
+
+    checkAuth();
+
+    // Слушаем событие, когда оба токена протухли (из axios.js)
+    const handleAuthExpired = () => setCurrentUser(null);
+    window.addEventListener('auth-expired', handleAuthExpired);
+    return () => window.removeEventListener('auth-expired', handleAuthExpired);
+  }, []);
+
+  const handleLogout = () => {
+    authService.logout();
+    setCurrentUser(null);
+  };
+
+  // Пока идет проверка токена, можно показать спиннер или пустой экран
+  if (isLoadingAuth) {
+    return (
+      <div className="d-flex align-items-center justify-content-center" style={{ height: '100vh' }}>
+        <div className="spinner-border" style={{ color: '#18442a' }} role="status"></div>
+      </div>
+    );
+  }
+
   return (
     <Router>
-      <CustomNavbar />
+      {/* Передаем данные о юзере в шапку сайта */}
+      <CustomNavbar currentUser={currentUser} onLogout={handleLogout} />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/map" element={<MapPage />} />
+        {/* Передаем currentUser в MapPage, чтобы там проверять, можно ли добавить точку */}
+        <Route path="/map" element={<MapPage currentUser={currentUser} />} />
         <Route path="/articles" element={<Articles />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/profile" element={<Profile />} />
+        <Route path="/login" element={<Login setCurrentUser={setCurrentUser} />} />
+        <Route path="/profile" element={<Profile currentUser={currentUser} onLogout={handleLogout} />} />
       </Routes>
     </Router>
   );
 }
+
+export default App;
 
 export default App; 
