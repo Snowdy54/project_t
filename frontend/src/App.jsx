@@ -4,6 +4,8 @@ import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react
 import './App.css';
 import axios from 'axios';
 import { authService } from './api/services';
+import Login from './Login';
+import Register from './Register'; 
 
 const Home = () => {
   // Состояние для открытия/закрытия дополнительного текста "Читать подробнее"
@@ -197,10 +199,36 @@ const Home = () => {
           </div>
 
         </div>
+        {/* ИСПРАВЛЕННЫЙ ХОВЕР С ПЛАВНОЙ СТРЕЛОЧКОЙ */}
+        <style>
+          {`
+            .articles-link {
+              display: inline-flex;
+              align-items: center;
+              transition: all 0.3s ease;
+            }
+            .articles-link img {
+              max-width: 0;
+              opacity: 0;
+              margin-left: 0;
+              transition: all 0.3s ease;
+              overflow: hidden;
+            }
+            .articles-link:hover img {
+              max-width: 24px;
+              opacity: 1;
+              margin-left: 8px;
+            }
+          `}
+        </style>
         <div className="text-center mt-4 mb-5">
-          {/* Исправлено: Заменили span на Link для перенаправления */}
-          <Link to="/articles" className="text-decoration-none" style={{ cursor: 'pointer', color: '#18442a', fontSize: '1.1rem'}}>
-            Перейти ко всем статьям и подкастам
+          <Link 
+            to="/articles" 
+            className="text-decoration-none articles-link" 
+            style={{ cursor: 'pointer', color: '#18442a', fontSize: '1.1rem', fontWeight: 500 }}
+          >
+            <span>Перейти ко всем статьям и подкастам</span>
+            <img src="/icons/arrow-right.png" alt="->" style={{ height: '16px' }} />
           </Link>
         </div>
       </div>
@@ -216,7 +244,7 @@ const Home = () => {
         }}
       >
         <div style={{ color: '#18442a', fontSize: '12px', fontWeight: 700, fontFamily: 'Actay, sans-serif' }}>
-          © 2026 «ГдеСдать»
+          «ГдеСдать» © 2026
         </div>
         <div style={{ color: '#18442a', fontSize: '12px', fontWeight: 700, fontFamily: 'Actay, sans-serif' }}>
           Support: <a href="mailto:gdesdat@gmail.com" style={{ color: '#18442a', textDecoration: 'none' }}>gdesdat@gmail.com</a>
@@ -367,6 +395,8 @@ const AddPointPanel = ({ onClose, wasteCategories = [], reduceCategories = [], a
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 3000);
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = true;
     if (!formData.address.trim()) newErrors.address = true;
@@ -1254,7 +1284,7 @@ const MapPage = () => {
           <YMaps query={{ apikey: "cd6e05b5-779b-4303-b21c-f9534e4a4a39" }}>
             <Map 
               instanceRef={mapRef}
-              defaultState={{ center: [55.751574, 37.573856], zoom: 10, controls: [] }} 
+              defaultState={{ center: [56.838011, 60.597474], zoom: 12, controls: [] }} 
               width="100%" 
               height="100%" 
               onLoad={() => {
@@ -1343,101 +1373,837 @@ const MapPage = () => {
       </div>
 
       <footer className="w-100 d-flex justify-content-between align-items-center" style={{ height: '40px', backgroundColor: '#F4F6E3', paddingLeft: '80px', paddingRight: '80px', flexShrink: 0 }}>
-        <div style={{ color: '#18442a', fontSize: '12px', fontWeight: 700, fontFamily: 'Actay, sans-serif' }}>© 2026 «ГдеСдать»</div>
+        <div style={{ color: '#18442a', fontSize: '12px', fontWeight: 700, fontFamily: 'Actay, sans-serif' }}>«ГдеСдать» © 2026</div>
         <div style={{ color: '#18442a', fontSize: '12px', fontWeight: 700, fontFamily: 'Actay, sans-serif' }}>Support: <a href="mailto:gdesdat@gmail.com" style={{ color: '#18442a', textDecoration: 'none' }}>gdesdat@gmail.com</a></div>
       </footer>
     </div>
   );
 };
 
-const Login = () => <div className="container-fluid mt-5 text-center"><h1>Вход</h1></div>;
-const Profile = () => <div className="container-fluid mt-5 text-center"><h1>Личный кабинет</h1></div>;
 const Articles = () => <div className="container-fluid mt-5 text-center"><h1>Статьи и подкасты</h1></div>;
 
 // ---- НАВИГАЦИЯ (ШАПКА) ----
 const CustomNavbar = () => {
   const location = useLocation();
-  
+
+  const navLinkStyle = (path) => ({
+    color: location.pathname === path ? 'white' : '#18442a',
+    backgroundColor: location.pathname === path ? '#18442a' : 'transparent',
+    borderRadius: '40px',
+    fontSize: '14px',
+    fontWeight: 700,
+  });
+
+  const rightButtonStyle = (path, isFilled = false) => ({
+    color: location.pathname === path ? 'white' : (isFilled ? 'white' : '#18442a'),
+    backgroundColor: location.pathname === path
+      ? '#18442a'
+      : (isFilled ? '#18442a' : 'transparent'),
+    border: isFilled ? 'none' : '1px solid #18442a',
+    borderRadius: '40px',
+    height: '41px',
+    paddingLeft: '24px',
+    paddingRight: '24px',
+    fontSize: '14px',
+    fontWeight: 700,
+    whiteSpace: 'nowrap',
+  });
+
   return (
-    <nav 
-      className="w-100 d-flex justify-content-between align-items-center bg-white position-sticky top-0" 
-      style={{ 
-        zIndex: 1000, 
-        paddingTop: '18px', 
+    <nav
+      className="w-100 d-flex justify-content-between align-items-center bg-white position-sticky top-0"
+      style={{
+        zIndex: 1000,
+        paddingTop: '18px',
         paddingBottom: '18px',
-        paddingLeft: '80px', 
-        paddingRight: '80px', 
+        paddingLeft: '80px',
+        paddingRight: '80px',
       }}
     >
-      <div className="d-flex align-items-center">
-        <img src="/logo.jpg" alt="Логотип" style={{ width: '51px', height: '55px', objectFit: 'contain' }} />
+      {/* ЛОГОТИП */}
+      <div className="d-flex align-items-center" style={{ width: '220px' }}>
+        <img
+          src="/logo.jpg"
+          alt="Логотип"
+          style={{ width: '51px', height: '55px', objectFit: 'contain' }}
+        />
       </div>
-      
-      <div 
-        className="d-flex align-items-center justify-content-between" 
-        style={{ 
-          width: '503px', 
-          height: '40px', 
-          backgroundColor: '#f1f4e9', 
-          borderRadius: '40px', 
-          padding: '4px' 
+
+      {/* ЦЕНТРАЛЬНОЕ МЕНЮ */}
+      <div
+        className="d-flex align-items-center justify-content-between"
+        style={{
+          width: '503px',
+          height: '40px',
+          backgroundColor: '#F4F6E3',
+          borderRadius: '40px',
+          padding: '4px',
         }}
       >
-        <Link 
-          to="/" 
-          className={`text-decoration-none h-100 d-flex align-items-center justify-content-center flex-grow-1 ${location.pathname === '/' ? 'text-white' : 'text-dark'}`} 
-          style={{ 
-            backgroundColor: location.pathname === '/' ? '#18442a' : 'transparent', 
-            borderRadius: '40px',
-            fontSize: '14px',
-            fontWeight: location.pathname === '/' ? 700 : 400 
-          }}
+        <Link
+          to="/"
+          className={`text-decoration-none h-100 d-flex align-items-center justify-content-center flex-grow-1 ${location.pathname === '/' ? 'text-white' : ''}`}
+          style={navLinkStyle('/')}
         >
           Главная
         </Link>
-        <Link 
-          to="/map" 
-          className={`text-decoration-none h-100 d-flex align-items-center justify-content-center flex-grow-1 ${location.pathname === '/map' ? 'text-white' : 'text-dark'}`} 
-          style={{ 
-            backgroundColor: location.pathname === '/map' ? '#18442a' : 'transparent', 
-            borderRadius: '40px',
-            fontSize: '14px',
-            fontWeight: location.pathname === '/map' ? 700 : 400 
-          }}
+
+        <Link
+          to="/map"
+          className={`text-decoration-none h-100 d-flex align-items-center justify-content-center flex-grow-1 ${location.pathname === '/map' ? 'text-white' : ''}`}
+          style={navLinkStyle('/map')}
         >
           Карта пунктов приема
         </Link>
-        <Link 
-          to="/articles" 
-          className={`text-decoration-none h-100 d-flex align-items-center justify-content-center flex-grow-1 ${location.pathname === '/articles' ? 'text-white' : 'text-dark'}`} 
-          style={{ 
-            backgroundColor: location.pathname === '/articles' ? '#18442a' : 'transparent', 
-            borderRadius: '40px',
-            fontSize: '14px',
-            fontWeight: location.pathname === '/articles' ? 700 : 400 
-          }}
+
+        <Link
+          to="/articles"
+          className={`text-decoration-none h-100 d-flex align-items-center justify-content-center flex-grow-1 ${location.pathname === '/articles' ? 'text-white' : ''}`}
+          style={navLinkStyle('/articles')}
         >
           Статьи и подкасты
         </Link>
       </div>
 
-      {/* Исправлено: Добавлена логика выделения для кнопки Личный кабинет */}
-      <Link 
-        to="/profile" 
-        className={`text-decoration-none d-flex align-items-center justify-content-center ${location.pathname === '/profile' ? 'text-white' : 'text-dark'}`} 
-        style={{ 
-          backgroundColor: location.pathname === '/profile' ? '#18442a' : '#F4F6E3', 
-          borderRadius: '40px',
-          height: '41px',
-          paddingLeft: '30px',
-          paddingRight: '30px',
-          fontSize: '14px',
-          fontWeight: location.pathname === '/profile' ? 700 : 400 
-        }}
+      {/* ПРАВАЯ ЧАСТЬ */}
+      <div
+        className="d-flex justify-content-end align-items-center gap-3"
+        style={{ width: '220px' }}
       >
-        Личный кабинет
-      </Link>
+        <Link
+          to="/login"
+          className="text-decoration-none d-flex align-items-center justify-content-center"
+          style={rightButtonStyle('/login', false)}
+        >
+          Войти
+        </Link>
+
+        <Link
+          to="/profile"
+          className="text-decoration-none d-flex align-items-center justify-content-center"
+          style={rightButtonStyle('/profile', true)}
+        >
+          Личный кабинет
+        </Link>
+      </div>
     </nav>
+  );
+};
+
+// ----------------------------------------------------
+// Компонент Личного кабинета (Профиль)
+// ----------------------------------------------------
+const Profile = ({ currentUser, onLogout }) => {
+  const [activeTab, setActiveTab] = useState('contacts');
+  
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    city: '',
+    phone: '',
+    about: ''
+  });
+
+  const [isPasswordEditMode, setIsPasswordEditMode] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    current: '',
+    new: '',
+    confirm: ''
+  });
+
+  const [notification, setNotification] = useState({ show: false, title: '', message: '' });
+
+  // Моковые данные для точек
+  const [expandedPointId, setExpandedPointId] = useState(null);
+  const mockPoints = [
+    {
+      id: 1,
+      name: 'Пункт сбора «Добрый лес»',
+      address: 'г. Березовский, ул. Красных Героев, 3',
+      role: 'Модератор',
+      types: ['Пластик', 'Бумага', 'Крышки', 'Металл'],
+      schedule: 'понедельник-пятница: 16:00 - 19:00;\nсуббота-воскресенье: 10:00 - 16:00.'
+    },
+    {
+      id: 2,
+      name: 'Пункт сбора «Уралвторма»',
+      address: 'г. Екатеринбург, ул. Чайковского, 82а',
+      role: 'Модератор',
+      types: ['Пластик', 'Бумага', 'Крышки', 'Металл'],
+      schedule: 'понедельник-пятница: 16:00 - 19:00;\nсуббота-воскресенье: 10:00 - 16:00.'
+    }
+  ];
+
+  const getTypeColor = (type) => {
+    switch(type) {
+      case 'Пластик': return '#BDE1F8';
+      case 'Бумага': return '#FFC4C4';
+      case 'Крышки': return '#FFF1A8';
+      case 'Металл': return '#C5B4FF';
+      default: return '#E0E0E0';
+    }
+  };
+
+  const togglePoint = (id) => {
+    setExpandedPointId(expandedPointId === id ? null : id);
+  };
+
+  const handleInputChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handlePasswordChange = (e) => {
+    setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
+  };
+
+  const handleSaveProfile = (e) => {
+    e.preventDefault();
+    setNotification({ show: true, title: 'Готово!', message: 'Изменения сохранены.' });
+    setTimeout(() => setNotification({ show: false, title: '', message: '' }), 3000);
+  };
+
+  const handleSavePassword = (e) => {
+    e.preventDefault();
+    setIsPasswordEditMode(false);
+    setPasswordData({ current: '', new: '', confirm: '' });
+    setNotification({ show: true, title: 'Готово!', message: 'Пароль успешно изменен.' });
+    setTimeout(() => setNotification({ show: false, title: '', message: '' }), 3000);
+  };
+
+  // Общий стиль для всех карточек (без обводки, с тенью)
+  const cardStyle = {
+    backgroundColor: '#FFFFFF',
+    borderRadius: '16px',
+    border: 'none',
+    boxShadow: '0 4px 24px rgba(0,0,0,0.06)'
+  };
+
+    // Стейты для уведомлений
+  const [notificationTab, setNotificationTab] = useState('incoming'); // 'incoming' или 'outgoing'
+  const [searchQuery, setSearchQuery] = useState('');
+  const [expandedNotifId, setExpandedNotifId] = useState(null);
+
+  // НОВЫЙ СТЕЙТ: Открыто ли окно создания уведомления
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  // Моковые данные уведомлений
+  const mockNotifications = [
+    {
+      id: 1,
+      type: 'incoming',
+      pointName: 'Пункт сбора «Добрый лес»',
+      address: 'г. Березовский, ул. Красных Героев, 3',
+      role: 'Модератор',
+      isNew: true, // Индикатор нового сообщения
+      date: 'Сегодня, 14:30',
+      text: 'Вам назначена новая роль для этого пункта сбора. Пожалуйста, ознакомьтесь с новыми правилами модерации в разделе "Статьи".'
+    },
+    {
+      id: 2,
+      type: 'incoming',
+      pointName: 'Пункт сбора «Уралвторма»',
+      address: 'г. Екатеринбург, ул. Чайковского, 82а',
+      role: 'Модератор',
+      isNew: true,
+      date: 'Вчера, 09:15',
+      text: 'Приносите более 5 кг бумаги и получайте бонусную карту нашего партнера со скидкой 10% на кофе!'
+    }
+  ];
+
+  const toggleNotification = (id) => {
+    setExpandedNotifId(expandedNotifId === id ? null : id);
+  };
+
+  return (
+    // ИСПРАВЛЕНИЕ 1: Фон чисто белый
+    <div className="d-flex flex-column" style={{ minHeight: 'calc(100vh - 80px)', backgroundColor: '#FFFFFF' }}>
+      
+      {/* ИСПРАВЛЕНИЕ 4: Линия под шапкой цвета #E7EFE8 */}
+      <div style={{ borderBottom: '2px solid #E7EFE8', backgroundColor: '#FFFFFF', padding: '0 80px' }}>
+        <div className="d-flex gap-5">
+          <div 
+            onClick={() => setActiveTab('contacts')}
+            style={{ 
+              padding: '24px 0', cursor: 'pointer', fontSize: '15px', 
+              color: activeTab === 'contacts' ? '#18442A' : '#6BAD86', 
+              borderBottom: activeTab === 'contacts' ? '2px solid #18442A' : '2px solid transparent',
+              fontWeight: activeTab === 'contacts' ? '500' : '400', transition: '0.2s',
+              marginBottom: '-2px' /* Чтобы зеленая полоса перекрывала серую линию */
+            }}
+          >
+            Контактная информация
+          </div>
+          <div 
+            onClick={() => setActiveTab('points')}
+            style={{ 
+              padding: '24px 0', cursor: 'pointer', fontSize: '15px', 
+              color: activeTab === 'points' ? '#18442A' : '#6BAD86', 
+              borderBottom: activeTab === 'points' ? '2px solid #18442A' : '2px solid transparent',
+              fontWeight: activeTab === 'points' ? '500' : '400', transition: '0.2s',
+              marginBottom: '-2px'
+            }}
+          >
+            Список модерируемых точек
+          </div>
+          <div 
+            onClick={() => setActiveTab('notifications')}
+            style={{ 
+              padding: '24px 0', cursor: 'pointer', fontSize: '15px', 
+              color: activeTab === 'notifications' ? '#18442A' : '#6BAD86', 
+              borderBottom: activeTab === 'notifications' ? '2px solid #18442A' : '2px solid transparent',
+              fontWeight: activeTab === 'notifications' ? '500' : '400', transition: '0.2s',
+              marginBottom: '-2px'
+            }}
+          >
+            Уведомления
+          </div>
+        </div>
+      </div>
+
+      {/* Основной контент */}
+      <div className="flex-grow-1" style={{ padding: '40px 80px', position: 'relative' }}>
+        
+        {activeTab === 'contacts' && (
+          <div className="d-flex gap-4 align-items-start">
+            
+            {/* ЛЕВАЯ КОЛОНКА */}
+            <div className="d-flex flex-column gap-4" style={{ width: '320px', flexShrink: 0 }}>
+              
+              {/* ИСПРАВЛЕНИЕ 2: Карточка профиля с тенью */}
+              <div className="p-4 text-center position-relative" style={cardStyle}>
+                <div 
+                  className="mx-auto rounded-circle d-flex justify-content-center align-items-center position-relative" 
+                  style={{ 
+                    width: '120px', height: '120px', 
+                    background: '#F4F6E3',
+                    border: '3px solid transparent',
+                    backgroundImage: 'linear-gradient(#F4F6E3, #F4F6E3), linear-gradient(180deg, #18442A 0%, #417858 50%, #6BAD86 100%)',
+                    backgroundOrigin: 'border-box',
+                    backgroundClip: 'content-box, border-box'
+                  }}
+                >
+                  <i className="bi bi-person-fill position-relative" style={{ fontSize: '60px', color: '#6BAD86', top: '4px' }}></i>
+                  
+                  <div 
+                    className="position-absolute d-flex justify-content-center align-items-center shadow-sm" 
+                    style={{ 
+                      width: '32px', height: '32px', 
+                      backgroundColor: '#FFCCAB', 
+                      borderRadius: '50%', 
+                      bottom: '-2px', right: '-2px', 
+                      cursor: 'pointer',
+                      border: '3px solid #FFFFFF'
+                    }}
+                  >
+                    <img src="/icons/pencil_filled.png" alt="edit" style={{ width: '14px', height: '14px' }} />
+                  </div>
+                </div>
+                <h5 className="mt-3 mb-3" style={{ color: '#18442A', fontWeight: '700', fontSize: '18px' }}>Имя Фамилия</h5>
+                
+                {/* ИСПРАВЛЕНИЕ 3: Полоса цвета #F4F6E3 и не прилипает к краям (убран margin: '0 -24px') */}
+                <div style={{ borderTop: '2px solid #F4F6E3', marginTop: '16px', paddingTop: '16px' }}>
+                  <h4 style={{ color: '#18442A', margin: 0, fontWeight: '700' }}>6</h4>
+                  <span style={{ fontSize: '13px', color: '#18442A' }}>модерируемых пунктов</span>
+                </div>
+              </div>
+
+              {/* ИСПРАВЛЕНИЕ 2: Блок безопасности с тенью */}
+              <div className="p-4" style={cardStyle}>
+                <h6 className="d-flex align-items-center" style={{ color: '#18442A', fontWeight: '700', fontSize: '15px', marginBottom: '16px' }}>
+                  <img src="/icons/lock.png" alt="lock" style={{ width: '16px', marginRight: '8px' }} />
+                  Безопасность
+                </h6>
+                
+                {isPasswordEditMode ? (
+                  <div>
+                    <div className="mb-3">
+                      <label style={{ fontSize: '13px', color: '#18442A', marginBottom: '6px', display: 'block' }}>Пароль</label>
+                      <input type="password" name="current" placeholder="Текущий пароль" value={passwordData.current} onChange={handlePasswordChange} className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '8px 12px' }} />
+                    </div>
+                    <div className="mb-3">
+                      <label style={{ fontSize: '13px', color: '#18442A', marginBottom: '6px', display: 'block' }}>Новый пароль</label>
+                      <input type="password" name="new" placeholder="Новый пароль" value={passwordData.new} onChange={handlePasswordChange} className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '8px 12px' }} />
+                    </div>
+                    <div className="mb-3">
+                      <label style={{ fontSize: '13px', color: '#18442A', marginBottom: '6px', display: 'block' }}>Подтвердите новый пароль</label>
+                      <input type="password" name="confirm" placeholder="Повторно введите новый пароль" value={passwordData.confirm} onChange={handlePasswordChange} className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '8px 12px' }} />
+                    </div>
+                    <button onClick={handleSavePassword} className="btn w-100 mt-2" style={{ backgroundColor: '#18442A', color: '#FFFFFF', fontSize: '13px', fontWeight: '500', borderRadius: '8px', padding: '10px' }}>Сохранить пароль</button>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="mb-3">
+                      <label style={{ fontSize: '13px', color: '#18442A', marginBottom: '6px', display: 'block' }}>Пароль</label>
+                      <input type="password" placeholder="*********" disabled className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '8px 12px', backgroundColor: '#fff' }} />
+                    </div>
+                    <button onClick={(e) => { e.preventDefault(); setIsPasswordEditMode(true); }} className="btn w-100" style={{ backgroundColor: '#18442A', color: '#FFFFFF', fontSize: '13px', fontWeight: '500', borderRadius: '8px', padding: '10px' }}>Изменить пароль</button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* ПРАВАЯ КОЛОНКА */}
+            <div className="d-flex flex-column" style={{ maxWidth: '1100px', flexGrow: 1 }}>
+              
+              {/* ИСПРАВЛЕНИЕ 2: Настройки профиля с тенью */}
+              <div className="p-5 mb-4" style={cardStyle}>
+                <h4 style={{ color: '#18442A', fontWeight: '700', marginBottom: '32px' }}>Настройки профиля</h4>
+                
+                <div className="row mb-4">
+                  <div className="col-md-6">
+                    <h6 style={{ color: '#18442A', fontWeight: '700', fontSize: '14px', marginBottom: '20px' }}>Личные данные</h6>
+                    <div className="mb-3">
+                      <label style={{ fontSize: '13px', color: '#18442A', marginBottom: '6px', display: 'block' }}>Имя*</label>
+                      <input type="text" name="firstName" placeholder="Введите ваше имя" className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '10px 12px' }} />
+                    </div>
+                    <div className="mb-3">
+                      <label style={{ fontSize: '13px', color: '#18442A', marginBottom: '6px', display: 'block' }}>Фамилия*</label>
+                      <input type="text" name="lastName" placeholder="Введите вашу фамилию" className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '10px 12px' }} />
+                    </div>
+                    <div className="mb-3">
+                      <label style={{ fontSize: '13px', color: '#18442A', marginBottom: '6px', display: 'block' }}>Город проживания</label>
+                      <input type="text" name="city" placeholder="Начните вводить..." className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '10px 12px' }} />
+                    </div>
+                  </div>
+
+                  <div className="col-md-6">
+                    <h6 style={{ color: '#18442A', fontWeight: '700', fontSize: '14px', marginBottom: '20px' }}>Контактная информация</h6>
+                    <div className="mb-3">
+                      <label style={{ fontSize: '13px', color: '#18442A', marginBottom: '6px', display: 'block' }}>Email*</label>
+                      <div className="position-relative">
+                        <img src="/icons/mail.png" alt="mail" style={{ width: '16px', position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                        <input type="email" name="email" placeholder="Введите ваш email" className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '10px 12px 10px 38px' }} />
+                      </div>
+                    </div>
+                    <div className="mb-3">
+                      <label style={{ fontSize: '13px', color: '#18442A', marginBottom: '6px', display: 'block' }}>Номер телефона</label>
+                      <input type="tel" name="phone" placeholder="+ 7 (___) - ___ - __ - __" className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '10px 12px' }} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-5">
+                  <label style={{ fontSize: '13px', color: '#18442A', marginBottom: '6px', display: 'block' }}>Обо мне</label>
+                  <textarea name="about" placeholder="Расскажите о себе" className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '12px', minHeight: '100px', resize: 'none' }}></textarea>
+                </div>
+
+                <div className="d-flex align-items-center gap-4">
+                  <button onClick={handleSaveProfile} className="btn px-5 py-2" style={{ backgroundColor: '#18442A', color: '#FFFFFF', fontSize: '14px', fontWeight: '500', borderRadius: '8px' }}>Сохранить изменения</button>
+                  <span onClick={onLogout} style={{ fontSize: '14px', color: '#18442A', cursor: 'pointer', fontWeight: '500' }}>Выйти</span>
+                  <span className="ms-auto" style={{ fontSize: '13px', color: '#FF8A8A', cursor: 'pointer' }}>Удалить аккаунт</span>
+                </div>
+              </div>
+
+              {/* ИСПРАВЛЕНИЕ 2: Блок со смайликом с тенью */}
+              <div className="d-flex align-items-center" style={{ ...cardStyle, padding: '16px 24px' }}>
+                <img src="/icons/smile.png" alt="smile" style={{ width: '28px', height: '28px', marginRight: '16px' }} />
+                <span style={{ fontSize: '13px', color: '#18442A', lineHeight: '1.4', fontWeight: '500' }}>
+                  Заполненный профиль помогает нам делать сервис удобнее именно для вас. Мы гарантируем абсолютную конфиденциальность и защиту ваших персональных данных.
+                </span>
+              </div>
+              
+            </div>
+          </div>
+        )}
+
+        {/* СПИСОК МОДЕРИРУЕМЫХ ТОЧЕК */}
+        {activeTab === 'points' && (
+          <div className="d-flex flex-column gap-3" style={{ maxWidth: '800px' }}>
+            {mockPoints.map(point => {
+              const isExpanded = expandedPointId === point.id;
+              return (
+                // ИСПРАВЛЕНИЕ 2: Карточка точки с тенью
+                <div key={point.id} style={{ ...cardStyle, overflow: 'hidden', transition: 'all 0.3s ease' }}>
+                  
+                  <div 
+                    onClick={() => togglePoint(point.id)}
+                    className="d-flex justify-content-between align-items-center p-4" 
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div className="d-flex align-items-center gap-3">
+                      <div 
+                        className="d-flex justify-content-center align-items-center" 
+                        style={{ width: '48px', height: '48px', backgroundColor: '#F4F6E3', borderRadius: '12px' }}
+                      >
+                        {/* ИСПРАВЛЕНИЕ 5: Картинка маркера в формате PNG */}
+                        <img src="/icons/marker-outline.png" alt="marker" style={{ width: '24px' }} />
+                      </div>
+                      <div>
+                        <h6 style={{ margin: 0, color: '#18442A', fontSize: '16px', fontWeight: '600', marginBottom: '4px' }}>
+                          {point.name}
+                        </h6>
+                        <span style={{ color: '#6BAD86', fontSize: '13px' }}>
+                          {point.address} • {point.role}
+                        </span>
+                      </div>
+                    </div>
+                    <i 
+                      className={`bi bi-chevron-${isExpanded ? 'up' : 'down'}`} 
+                      style={{ color: '#18442A', fontSize: '18px', transition: 'transform 0.3s' }}
+                    ></i>
+                  </div>
+
+                  {isExpanded && (
+                    <div className="p-4 pt-0" style={{ borderTop: '1px solid #E7EFE8' }}>
+                      <div className="row mt-4">
+                        <div className="col-md-6 mb-4 mb-md-0">
+                          <span style={{ fontSize: '13px', color: '#18442A', fontWeight: '600', display: 'block', marginBottom: '12px' }}>
+                            Принимаемые типы отходов:
+                          </span>
+                          <div className="d-flex flex-wrap gap-2 mb-4">
+                            {point.types.map(type => (
+                              <span 
+                                key={type} 
+                                style={{ 
+                                  backgroundColor: getTypeColor(type), 
+                                  color: '#18442A', 
+                                  fontSize: '13px', 
+                                  padding: '6px 12px', 
+                                  borderRadius: '8px', /* ИСПРАВЛЕНИЕ 6: Скругление 8px как у кнопок */
+                                  fontWeight: '500'
+                                }}
+                              >
+                                {type}
+                              </span>
+                            ))}
+                          </div>
+                          
+                          <div className="d-flex gap-3">
+                            {/* ИСПРАВЛЕНИЕ 7: Кнопка Редактировать теперь ссылка-роут <Link> */}
+                            <Link 
+                              to={`/edit-point/${point.id}`} 
+                              className="btn d-inline-flex align-items-center justify-content-center" 
+                              style={{ backgroundColor: '#18442A', color: 'white', fontSize: '13px', fontWeight: '500', borderRadius: '8px', padding: '8px 20px', textDecoration: 'none' }}
+                            >
+                              Редактировать
+                            </Link>
+                            <button 
+                              className="btn" 
+                              style={{ backgroundColor: '#F4F6E3', color: '#18442A', fontSize: '13px', fontWeight: '500', borderRadius: '8px', padding: '8px 20px' }}
+                            >
+                              Подробнее
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="col-md-6">
+                          <span style={{ fontSize: '13px', color: '#18442A', fontWeight: '600', display: 'block', marginBottom: '12px' }}>
+                            Режим работы:
+                          </span>
+                          <div style={{ fontSize: '13px', color: '#18442A', lineHeight: '1.6', whiteSpace: 'pre-line' }}>
+                            {point.schedule}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* УНИВЕРСАЛЬНОЕ УВЕДОМЛЕНИЕ */}
+        {notification.show && (
+          <div className="d-flex align-items-center gap-3 shadow p-3" style={{ position: 'fixed', bottom: '40px', right: '40px', backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E7EFE8', minWidth: '320px', zIndex: 9999 }}>
+            <div className="d-flex justify-content-center align-items-center" style={{ width: '44px', height: '44px', backgroundColor: '#6BAD86', borderRadius: '50% 50% 8px 50%' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 13L9.5 17.5L19 6.5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div className="flex-grow-1">
+              <h6 style={{ margin: 0, color: '#18442A', fontWeight: '700', fontSize: '14px' }}>{notification.title}</h6>
+              <span style={{ fontSize: '13px', color: '#18442A' }}>{notification.message}</span>
+            </div>
+            <i className="bi bi-x-lg" style={{ color: '#18442A', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }} onClick={() => setNotification({ show: false, title: '', message: '' })}></i>
+          </div>
+        )}
+
+                {/* ВКЛАДКА УВЕДОМЛЕНИЙ */}
+        {activeTab === 'notifications' && (
+          <div className="d-flex flex-column gap-4" style={{ maxWidth: '800px' }}>
+            
+            {/* Панель управления: Входящие/Исходящие, Поиск, Кнопка */}
+            <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
+              
+              <div className="d-flex align-items-center gap-3">
+                {/* Переключатель */}
+                <div 
+                  className="d-flex p-1" 
+                  style={{ border: '1px solid #E7EFE8', borderRadius: '40px', backgroundColor: '#FFFFFF' }}
+                >
+                  <button 
+                    onClick={() => setNotificationTab('incoming')}
+                    className="btn rounded-pill border-0" 
+                    style={{ 
+                      padding: '8px 24px', 
+                      fontSize: '14px', 
+                      fontWeight: '500',
+                      backgroundColor: notificationTab === 'incoming' ? '#18442A' : 'transparent',
+                      color: notificationTab === 'incoming' ? '#FFFFFF' : '#18442A'
+                    }}
+                  >
+                    Входящие
+                  </button>
+                  <button 
+                    onClick={() => setNotificationTab('outgoing')}
+                    className="btn rounded-pill border-0" 
+                    style={{ 
+                      padding: '8px 24px', 
+                      fontSize: '14px', 
+                      fontWeight: '500',
+                      backgroundColor: notificationTab === 'outgoing' ? '#18442A' : 'transparent',
+                      color: notificationTab === 'outgoing' ? '#FFFFFF' : '#18442A'
+                    }}
+                  >
+                    Исходящие
+                  </button>
+                </div>
+
+                {/* Поиск */}
+                <div className="position-relative" style={{ width: '240px' }}>
+                  <input 
+                    type="text" 
+                    placeholder="Поиск по названию..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{ 
+                      width: '100%', 
+                      padding: '10px 40px 10px 20px', 
+                      borderRadius: '40px', 
+                      border: '1px solid #18442A', 
+                      fontSize: '14px',
+                      outline: 'none'
+                    }} 
+                  />
+                  <i 
+                    className="bi bi-search position-absolute" 
+                    style={{ right: '16px', top: '50%', transform: 'translateY(-50%)', color: '#18442A' }}
+                  ></i>
+                </div>
+              </div>
+
+              {/* Кнопка "Создать уведомление" */}
+              <button 
+                onClick={() => setIsCreateModalOpen(true)}
+                className="btn rounded-pill d-flex align-items-center gap-2" 
+                style={{ backgroundColor: '#18442A', color: '#FFFFFF', padding: '10px 24px', fontSize: '14px', fontWeight: '500' }}
+              >
+                Создать уведомление <span style={{ fontSize: '18px', lineHeight: 1 }}>+</span>
+              </button>
+
+            </div>
+
+            {/* Список уведомлений */}
+            <div className="d-flex flex-column gap-3 mt-2">
+              {mockNotifications
+                .filter(n => n.type === notificationTab && n.pointName.toLowerCase().includes(searchQuery.toLowerCase()))
+                .map(notif => {
+                  const isExpanded = expandedNotifId === notif.id;
+                  return (
+                    <div 
+                      key={notif.id} 
+                      style={{ 
+                        backgroundColor: '#FFFFFF', 
+                        borderRadius: '16px', 
+                        border: '1px solid #E7EFE8', 
+                        boxShadow: '0 4px 24px rgba(0,0,0,0.02)', // Чуть более легкая тень
+                        overflow: 'hidden', 
+                        transition: 'all 0.3s ease' 
+                      }}
+                    >
+                      <div 
+                        onClick={() => toggleNotification(notif.id)}
+                        className="p-4 d-flex justify-content-between align-items-center" 
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <div>
+                          <h6 style={{ margin: 0, color: '#18442A', fontSize: '16px', fontWeight: '700', marginBottom: '4px' }}>
+                            {notif.pointName}
+                          </h6>
+                          <div style={{ color: '#A0A0A0', fontSize: '13px', marginBottom: '8px' }}>
+                            {notif.address} • {notif.role}
+                          </div>
+                          <div className="d-flex align-items-center gap-2">
+                            {notif.isNew && <div style={{ width: '6px', height: '6px', backgroundColor: '#6BAD86', borderRadius: '50%' }}></div>}
+                            <span style={{ color: '#6BAD86', fontSize: '14px', fontWeight: '500' }}>Уведомление</span>
+                            <span style={{ color: '#A0A0A0', fontSize: '12px', marginLeft: '10px' }}>{notif.date}</span>
+                          </div>
+                        </div>
+                        <i 
+                          className={`bi bi-chevron-${isExpanded ? 'up' : 'down'}`} 
+                          style={{ color: '#18442A', fontSize: '18px', transition: 'transform 0.3s' }}
+                        ></i>
+                      </div>
+
+                      {/* Развернутый текст */}
+                      {isExpanded && (
+                        <div className="px-4 pb-4 pt-2">
+                          <hr style={{ borderColor: '#E7EFE8', margin: '0 0 16px 0' }} />
+                          <p style={{ color: '#18442A', fontSize: '14px', lineHeight: '1.6', margin: 0 }}>
+                            {notif.text}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+              })}
+              
+              {/* Пустое состояние */}
+              {mockNotifications.filter(n => n.type === notificationTab).length === 0 && (
+                <div className="text-center py-5" style={{ color: '#A0A0A0' }}>
+                  Здесь пока нет уведомлений
+                </div>
+              )}
+            </div>
+
+          </div>
+        )}
+
+      {/* --------------------------------------------------- */}
+      {/* МОДАЛЬНОЕ ОКНО "СОЗДАТЬ УВЕДОМЛЕНИЕ" */}
+      {/* --------------------------------------------------- */}
+      {isCreateModalOpen && (
+        <div 
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+          style={{ 
+            backgroundColor: 'rgba(255, 255, 255, 0.4)', 
+            backdropFilter: 'blur(8px)',                  
+            WebkitBackdropFilter: 'blur(8px)',            
+            zIndex: 9999                                  
+          }}
+        >
+          <div 
+            className="bg-white d-flex flex-column" 
+            style={{ 
+              width: '401px',       // Точная ширина из Фигмы
+              height: '290px',      // Точная высота из Фигмы
+              padding: '24px 32px', // Уменьшил паддинги, чтобы всё влезло
+              borderRadius: '16px', 
+              boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+              border: '1px solid #E7EFE8'
+            }}
+          >
+            {/* ИСПРАВЛЕНИЕ 1: Шрифт Actay Wide */}
+            <h5 
+              className="mb-3" 
+              style={{ 
+                color: '#18442A', 
+                fontSize: '18px', 
+                fontFamily: '"Actay", sans-serif', // Подключение шрифта
+                fontWeight: '700'
+              }}
+            >
+              Новое уведомление
+            </h5>
+
+            {/* Выбор точки */}
+            <div className="mb-3">
+              <label style={{ fontSize: '12px', color: '#18442A', fontWeight: '500', display: 'block', marginBottom: '6px' }}>
+                Выберите точку
+              </label>
+              <div className="position-relative">
+                <select 
+                  className="form-select w-100 shadow-none" 
+                  style={{ 
+                    padding: '8px 12px', 
+                    borderRadius: '8px', 
+                    border: '1px solid #18442A', 
+                    fontSize: '13px', 
+                    color: '#18442A',
+                    backgroundColor: 'transparent',
+                    cursor: 'pointer',
+                    /* ВАЖНО: три строчки ниже убирают стрелку на всех браузерах */
+                    WebkitAppearance: 'none', 
+                    MozAppearance: 'none',
+                    appearance: 'none',
+                    backgroundImage: 'none' /* Убирает дефолтную стрелку от form-select из Bootstrap */
+                  }}
+                  defaultValue=""
+                >
+                  <option value="" disabled hidden>Пункт приема</option>
+                  <option value="1">Пункт сбора «Добрый лес»</option>
+                  <option value="2">Пункт сбора «Уралвторма»</option>
+                </select>
+                <i 
+                  className="bi bi-chevron-down position-absolute" 
+                  style={{ right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#18442A', fontSize: '12px', pointerEvents: 'none' }}
+                ></i>
+              </div>
+            </div>
+
+            {/* Текст акции/уведомления */}
+            <div className="mb-auto">
+              <label style={{ fontSize: '12px', color: '#18442A', fontWeight: '500', display: 'block', marginBottom: '6px' }}>
+                Текст акции
+              </label>
+              <textarea 
+                placeholder="Например: Скидка 20% на прием макулатуры..." 
+                className="form-control w-100 shadow-none" 
+                style={{ 
+                  padding: '8px 12px', 
+                  borderRadius: '8px', 
+                  border: '1px solid #18442A', // ИСПРАВЛЕНИЕ 2: Зеленая рамка
+                  fontSize: '13px', 
+                  height: '60px',              // Ограничил высоту, чтобы влезло в 290px
+                  resize: 'none' 
+                }}
+              ></textarea>
+            </div>
+
+            {/* Кнопки "Отмена" и "Опубликовать" */}
+            <div className="d-flex justify-content-between align-items-center mt-3">
+              <span 
+                onClick={() => setIsCreateModalOpen(false)}
+                style={{ fontSize: '13px', color: '#18442A', cursor: 'pointer', fontWeight: '500' }}
+              >
+                Отмена
+              </span>
+              <button 
+                className="btn border-0" 
+                onClick={() => {
+                  alert("Уведомление опубликовано!");
+                  setIsCreateModalOpen(false);
+                }}
+                style={{ 
+                  backgroundColor: '#18442A', 
+                  color: 'white', 
+                  fontSize: '13px', 
+                  fontWeight: '500', 
+                  borderRadius: '8px', 
+                  padding: '8px 20px' 
+                }}
+              >
+                Опубликовать
+              </button>
+            </div>
+            
+          </div>
+        </div>
+      )}
+
+      </div>
+    </div>
+  );
+};
+
+// ----------------------------------------------------
+// Компонент Редактирования точки (Заглушка)
+// ----------------------------------------------------
+const EditPoint = () => {
+  return (
+    <div className="d-flex flex-column" style={{ minHeight: 'calc(100vh - 80px)', backgroundColor: '#FFFFFF' }}>
+      <div style={{ padding: '40px 80px' }}>
+        <h4 style={{ color: '#18442A', fontWeight: '700', marginBottom: '32px' }}>РЕДАКТИРОВАНИЕ ТОЧКИ</h4>
+        <div className="bg-white p-5" style={{ borderRadius: '16px', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
+          <p style={{ color: '#18442A' }}>Здесь будет форма редактирования выбранной точки (такая же, как при добавлении).</p>
+          <Link to="/profile" className="btn" style={{ backgroundColor: '#18442A', color: 'white', marginTop: '20px' }}>
+            Вернуться в профиль
+          </Link>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -1498,6 +2264,8 @@ function App() {
         <Route path="/articles" element={<Articles />} />
         <Route path="/login" element={<Login setCurrentUser={setCurrentUser} />} />
         <Route path="/profile" element={<Profile currentUser={currentUser} onLogout={handleLogout} />} />
+        <Route path="/edit-point/:id" element={<EditPoint />} />
+        <Route path="/register" element={<Register />} />
       </Routes>
     </Router>
   );
