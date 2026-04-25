@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -19,11 +20,32 @@ const Login = () => {
 
     try {
       console.log('Попытка входа с данными:', formData);
-      // Пока бэкенд не привязан, просто перекидываем пользователя в Личный Кабинет
+      
+      // Отправляем логин и пароль на сервер
+      // В Django по умолчанию поле для логина называется username, даже если пользователь вводит email
+      // Отправляем логин и пароль на сервер
+      const response = await axios.post('http://127.0.0.1:8000/api/token/', {
+        username: formData.email.split('@')[0], // <-- ИСПРАВЛЕНО ЗДЕСЬ
+        password: formData.password
+      });
+
+      console.log('Токены получены:', response.data);
+      
+      // Сохраняем токены
+      localStorage.setItem('access_token', response.data.access);
+      localStorage.setItem('refresh_token', response.data.refresh);
+      
+      // Перекидываем пользователя в профиль
       navigate('/profile');
+
     } catch (err) {
       console.error(err);
-      setError('Неверный email или пароль');
+      // Если сервер ответил ошибкой 401 (Не авторизован)
+      if (err.response && err.response.status === 401) {
+        setError('Неверный логин или пароль');
+      } else {
+        setError('Ошибка при подключении к серверу');
+      }
     }
   };
 

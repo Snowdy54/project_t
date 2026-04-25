@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -28,10 +29,31 @@ const Register = () => {
 
     try {
       console.log('Попытка регистрации с данными:', formData);
+      
+      // Отправляем данные на бэкенд
+      const response = await axios.post('http://127.0.0.1:8000/api/register/', {
+        username: formData.email.split('@')[0], // Генерируем username из email (до @), т.к. Django требует username
+        email: formData.email,
+        password: formData.password,
+        first_name: formData.firstName,
+        last_name: formData.lastName
+      });
+
+      console.log('Успешная регистрация:', response.data);
+      
+      // Сразу после регистрации перекидываем на страницу входа
+      alert("Регистрация прошла успешно! Теперь вы можете войти.");
       navigate('/login');
+
     } catch (err) {
       console.error(err);
-      setError('Ошибка при регистрации. Попробуйте еще раз.');
+      if (err.response && err.response.data) {
+        // Если сервер вернул список ошибок (например, "Такой email уже существует")
+        const errorMessages = Object.values(err.response.data).flat().join(', ');
+        setError(errorMessages || 'Ошибка при регистрации. Проверьте введенные данные.');
+      } else {
+        setError('Ошибка при подключении к серверу');
+      }
     }
   };
 

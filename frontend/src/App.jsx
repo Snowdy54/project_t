@@ -1505,6 +1505,50 @@ const Profile = ({ currentUser, onLogout }) => {
     about: ''
   });
 
+  // Загрузка реальных данных профиля с бэкенда
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      const token = localStorage.getItem('access_token');
+      
+      // 1. ПРОВЕРКА ТОКЕНА
+      console.log('Текущий токен из localStorage:', token); 
+      
+      if (!token) {
+        console.warn('Токена нет! Запрос к профилю отменен.');
+        return; 
+      }
+
+      try {
+        const response = await axios.get('http://127.0.0.1:8000/api/profile/', {
+          headers: {
+            // 2. ИСПРАВЛЕНИЕ: Некоторые бэкенды на Django с SimpleJWT 
+            // требуют префикс 'JWT ' вместо 'Bearer '.
+            // Попробуем отправить с 'Bearer', но если у Андрея стандартные 
+            // настройки Djoser/SimpleJWT, то может потребоваться 'JWT'.
+            Authorization: `Bearer ${token}` 
+          }
+        });
+        
+        console.log('✅ Данные профиля получены:', response.data);
+        
+        setFormData(prev => ({
+          ...prev,
+          firstName: response.data.first_name || '',
+          lastName: response.data.last_name || '',
+          email: response.data.email || ''
+        }));
+
+      } catch (err) {
+        console.error('❌ Ошибка загрузки профиля:', err);
+        if (err.response) {
+            console.error('Ответ сервера:', err.response.data);
+        }
+      }
+    };
+
+    fetchProfileData();
+  }, []);
+
   const [isPasswordEditMode, setIsPasswordEditMode] = useState(false);
   const [passwordData, setPasswordData] = useState({
     current: '',
@@ -1588,28 +1632,32 @@ const Profile = ({ currentUser, onLogout }) => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Моковые данные уведомлений
-  const mockNotifications = [
+  const [mockNotifications, setMockNotifications] = useState([
     {
       id: 1,
       type: 'incoming',
       pointName: 'Пункт сбора «Добрый лес»',
-      address: 'г. Березовский, ул. Красных Героев, 3',
-      role: 'Модератор',
-      isNew: true, // Индикатор нового сообщения
-      date: 'Сегодня, 14:30',
-      text: 'Вам назначена новая роль для этого пункта сбора. Пожалуйста, ознакомьтесь с новыми правилами модерации в разделе "Статьи".'
+      address: 'г. Березовский, ул. Красных Героев, 3 • Модератор',
+      category: 'Предложение по изменению данных',
+      isNew: true, 
+      date: '24 апреля, 14:20',
+      text: 'Пользователь предложил добавить приём пластиковых бутылок 05 (PP) и изменить время работы на выходных до 20:00.'
     },
     {
       id: 2,
       type: 'incoming',
       pointName: 'Пункт сбора «Уралвторма»',
-      address: 'г. Екатеринбург, ул. Чайковского, 82а',
-      role: 'Модератор',
-      isNew: true,
-      date: 'Вчера, 09:15',
-      text: 'Приносите более 5 кг бумаги и получайте бонусную карту нашего партнера со скидкой 10% на кофе!'
+      address: 'г. Екатеринбург, ул. Чайковского, 82а • Модератор',
+      category: 'Предложение по изменению данных',
+      isNew: false, // Это уже прочитано (без точки)
+      date: '22 апреля, 10:55',
+      text: 'Пользователь предложил добавить приём пластиковых бутылок 05 (PP) и изменить время работы на выходных до 20:00.'
     }
-  ];
+  ]);
+
+  const markAllAsRead = () => {
+    setMockNotifications(prev => prev.map(notif => ({ ...notif, isNew: false })));
+  };
 
   const toggleNotification = (id) => {
     setExpandedNotifId(expandedNotifId === id ? null : id);
@@ -1920,85 +1968,67 @@ const Profile = ({ currentUser, onLogout }) => {
           </div>
         )}
 
-                {/* ВКЛАДКА УВЕДОМЛЕНИЙ */}
+        {/* ВКЛАДКА УВЕДОМЛЕНИЙ */}
         {activeTab === 'notifications' && (
           <div className="d-flex flex-column gap-4" style={{ maxWidth: '800px' }}>
             
-            {/* Панель управления: Входящие/Исходящие, Поиск, Кнопка */}
-            <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            {/* Панель управления: Входящие/Исходящие и "Пометить всё" */}
+            <div className="d-flex justify-content-between align-items-center">
               
-              <div className="d-flex align-items-center gap-3">
-                {/* Переключатель */}
-                <div 
-                  className="d-flex p-1" 
-                  style={{ border: '1px solid #E7EFE8', borderRadius: '40px', backgroundColor: '#FFFFFF' }}
+              {/* Переключатель */}
+              <div 
+                className="d-flex p-1" 
+                style={{ border: '1px solid #E7EFE8', borderRadius: '40px', backgroundColor: '#FFFFFF' }}
+              >
+                <button 
+                  onClick={() => setNotificationTab('incoming')}
+                  className="btn rounded-pill border-0" 
+                  style={{ 
+                    padding: '8px 24px', 
+                    fontSize: '14px', 
+                    fontWeight: '500',
+                    backgroundColor: notificationTab === 'incoming' ? '#18442A' : 'transparent',
+                    color: notificationTab === 'incoming' ? '#FFFFFF' : '#18442A'
+                  }}
                 >
-                  <button 
-                    onClick={() => setNotificationTab('incoming')}
-                    className="btn rounded-pill border-0" 
-                    style={{ 
-                      padding: '8px 24px', 
-                      fontSize: '14px', 
-                      fontWeight: '500',
-                      backgroundColor: notificationTab === 'incoming' ? '#18442A' : 'transparent',
-                      color: notificationTab === 'incoming' ? '#FFFFFF' : '#18442A'
-                    }}
-                  >
-                    Входящие
-                  </button>
-                  <button 
-                    onClick={() => setNotificationTab('outgoing')}
-                    className="btn rounded-pill border-0" 
-                    style={{ 
-                      padding: '8px 24px', 
-                      fontSize: '14px', 
-                      fontWeight: '500',
-                      backgroundColor: notificationTab === 'outgoing' ? '#18442A' : 'transparent',
-                      color: notificationTab === 'outgoing' ? '#FFFFFF' : '#18442A'
-                    }}
-                  >
-                    Исходящие
-                  </button>
-                </div>
-
-                {/* Поиск */}
-                <div className="position-relative" style={{ width: '240px' }}>
-                  <input 
-                    type="text" 
-                    placeholder="Поиск по названию..." 
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    style={{ 
-                      width: '100%', 
-                      padding: '10px 40px 10px 20px', 
-                      borderRadius: '40px', 
-                      border: '1px solid #18442A', 
-                      fontSize: '14px',
-                      outline: 'none'
-                    }} 
-                  />
-                  <i 
-                    className="bi bi-search position-absolute" 
-                    style={{ right: '16px', top: '50%', transform: 'translateY(-50%)', color: '#18442A' }}
-                  ></i>
-                </div>
+                  Входящие
+                </button>
+                <button 
+                  onClick={() => setNotificationTab('outgoing')}
+                  className="btn rounded-pill border-0" 
+                  style={{ 
+                    padding: '8px 24px', 
+                    fontSize: '14px', 
+                    fontWeight: '500',
+                    backgroundColor: notificationTab === 'outgoing' ? '#18442A' : 'transparent',
+                    color: notificationTab === 'outgoing' ? '#FFFFFF' : '#18442A'
+                  }}
+                >
+                  Исходящие
+                </button>
               </div>
 
-              {/* Кнопка "Создать уведомление" */}
-              <button 
-                onClick={() => setIsCreateModalOpen(true)}
-                className="btn rounded-pill d-flex align-items-center gap-2" 
-                style={{ backgroundColor: '#18442A', color: '#FFFFFF', padding: '10px 24px', fontSize: '14px', fontWeight: '500' }}
-              >
-                Создать уведомление <span style={{ fontSize: '18px', lineHeight: 1 }}>+</span>
-              </button>
-
+              {/* Кнопка Пометить прочитанным (показываем только для входящих) */}
+              {notificationTab === 'incoming' && (
+                <span 
+                  onClick={markAllAsRead}
+                  style={{ 
+                    color: '#18442A', // ИСПРАВЛЕНИЕ: Цвет #18442A
+                    fontSize: '14px', 
+                    textDecoration: 'underline', 
+                    cursor: 'pointer',
+                    fontWeight: '500'
+                  }}
+                >
+                  Пометить все прочитанным
+                </span>
+              )}
             </div>
 
             {/* Список уведомлений */}
             <div className="d-flex flex-column gap-3 mt-2">
               {mockNotifications
-                .filter(n => n.type === notificationTab && n.pointName.toLowerCase().includes(searchQuery.toLowerCase()))
+                .filter(n => n.type === notificationTab)
                 .map(notif => {
                   const isExpanded = expandedNotifId === notif.id;
                   return (
@@ -2008,8 +2038,7 @@ const Profile = ({ currentUser, onLogout }) => {
                         backgroundColor: '#FFFFFF', 
                         borderRadius: '16px', 
                         border: '1px solid #E7EFE8', 
-                        boxShadow: '0 4px 24px rgba(0,0,0,0.02)', // Чуть более легкая тень
-                        overflow: 'hidden', 
+                        boxShadow: '0 4px 24px rgba(0,0,0,0.02)',
                         transition: 'all 0.3s ease' 
                       }}
                     >
@@ -2018,28 +2047,55 @@ const Profile = ({ currentUser, onLogout }) => {
                         className="p-4 d-flex justify-content-between align-items-center" 
                         style={{ cursor: 'pointer' }}
                       >
-                        <div>
-                          <h6 style={{ margin: 0, color: '#18442A', fontSize: '16px', fontWeight: '700', marginBottom: '4px' }}>
-                            {notif.pointName}
-                          </h6>
-                          <div style={{ color: '#A0A0A0', fontSize: '13px', marginBottom: '8px' }}>
-                            {notif.address} • {notif.role}
+                        <div className="d-flex flex-column gap-2 w-100">
+                          
+                          {/* ИСПРАВЛЕНИЕ: Дата-плашка внутри карточки над текстом */}
+                          <div 
+                            style={{ 
+                              backgroundColor: '#F4F6E3', 
+                              color: '#A0A0A0', 
+                              fontSize: '12px', 
+                              padding: '4px 12px', 
+                              borderRadius: '8px',
+                              alignSelf: 'flex-start',
+                              marginLeft: '28px' // Отступ, чтобы плашка была на уровне текста
+                            }}
+                          >
+                            {notif.date}
                           </div>
-                          <div className="d-flex align-items-center gap-2">
-                            {notif.isNew && <div style={{ width: '6px', height: '6px', backgroundColor: '#6BAD86', borderRadius: '50%' }}></div>}
-                            <span style={{ color: '#6BAD86', fontSize: '14px', fontWeight: '500' }}>Уведомление</span>
-                            <span style={{ color: '#A0A0A0', fontSize: '12px', marginLeft: '10px' }}>{notif.date}</span>
+
+                          <div className="d-flex align-items-start gap-3">
+                            {/* Зеленая точка-индикатор для новых */}
+                            <div className="pt-2" style={{ width: '12px', flexShrink: 0 }}>
+                              {notif.isNew && (
+                                <div style={{ width: '12px', height: '12px', backgroundColor: '#6BAD86', borderRadius: '50%' }}></div>
+                              )}
+                            </div>
+                            
+                            <div>
+                              <h6 style={{ margin: 0, color: '#18442A', fontSize: '18px', fontWeight: '700', marginBottom: '8px' }}>
+                                {notif.pointName}
+                              </h6>
+                              <div style={{ color: '#A0A0A0', fontSize: '14px', marginBottom: '8px' }}>
+                                {notif.address}
+                              </div>
+                              <div style={{ color: '#6BAD86', fontSize: '15px', fontWeight: '500' }}>
+                                {notif.category}
+                              </div>
+                            </div>
                           </div>
+
                         </div>
+                        
                         <i 
                           className={`bi bi-chevron-${isExpanded ? 'up' : 'down'}`} 
-                          style={{ color: '#18442A', fontSize: '18px', transition: 'transform 0.3s' }}
+                          style={{ color: '#18442A', fontSize: '18px', transition: 'transform 0.3s', flexShrink: 0, marginTop: 'auto', marginBottom: 'auto' }}
                         ></i>
                       </div>
 
                       {/* Развернутый текст */}
                       {isExpanded && (
-                        <div className="px-4 pb-4 pt-2">
+                        <div className="px-4 pb-4 pt-1" style={{ paddingLeft: '60px' }}> {/* Отступ слева чтобы текст шел вровень с заголовком */}
                           <hr style={{ borderColor: '#E7EFE8', margin: '0 0 16px 0' }} />
                           <p style={{ color: '#18442A', fontSize: '14px', lineHeight: '1.6', margin: 0 }}>
                             {notif.text}
@@ -2057,7 +2113,6 @@ const Profile = ({ currentUser, onLogout }) => {
                 </div>
               )}
             </div>
-
           </div>
         )}
 
