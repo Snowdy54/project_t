@@ -19,7 +19,7 @@ class PointAdmin(admin.ModelAdmin):
         ("Основная информация", {
             'fields': ('name', 'address', 'status', 'owner')
         }),
-        ("Контакты и описание (Запрос Данила)", {
+        ("Контакты и описание", {
             'fields': ('description', 'phone', 'working_hours'),
             'description': "Здесь заполняются данные, которые будут выведены в карточку точки."
         }),

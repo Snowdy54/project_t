@@ -18,26 +18,31 @@ class PointWastePriceSerializer(serializers.ModelSerializer):
 
 class PointSerializer(serializers.ModelSerializer):
     prices = PointWastePriceSerializer(many=True, read_only=True)
-    # Добавляем метод для красивого вывода координат фронтенду
     coords = serializers.SerializerMethodField()
+    # Используем SerializerMethodField, чтобы собрать данные из связанных цен
+    accepted_waste = serializers.SerializerMethodField()
 
     class Meta:
         model = Point
         fields = [
             'id', 'name', 'address', 'latitude', 'longitude', 
-            'location', 'coords', # Новые поля
+            'location', 'coords', 
             'status', 'inn', 'legal_entity', 'prices',
+            'accepted_waste', # Теперь это поле будет заполнено
             'working_hours', 'phone', 'description' 
         ]
 
     def get_coords(self, obj):
-        # Если точка в базе есть, возвращаем объект с долготой и широтой
         if obj.location:
-            return {
-                "lng": obj.location.x,
-                "lat": obj.location.y
-            }
+            return {"lng": obj.location.x, "lat": obj.location.y}
         return None
+
+    def get_accepted_waste(self, obj):
+        # Собираем уникальные названия типов мусора из связанных цен (prices)
+        # Это исключит дублирование, если на один тип мусора несколько цен
+        wastes = obj.prices.filter(is_available=True).values_list('waste_type__name', flat=True).distinct()
+        return [{"name": name} for name in wastes]
+    
 
 class UserProfileSerializer(serializers.ModelSerializer):
     points = PointSerializer(many=True, read_only=True)
