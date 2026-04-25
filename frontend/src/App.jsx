@@ -1633,6 +1633,7 @@ const Profile = ({ currentUser, onLogout }) => {
 
   // Моковые данные уведомлений
   const [mockNotifications, setMockNotifications] = useState([
+    // --- Входящие ---
     {
       id: 1,
       type: 'incoming',
@@ -1649,11 +1650,38 @@ const Profile = ({ currentUser, onLogout }) => {
       pointName: 'Пункт сбора «Уралвторма»',
       address: 'г. Екатеринбург, ул. Чайковского, 82а • Модератор',
       category: 'Предложение по изменению данных',
-      isNew: false, // Это уже прочитано (без точки)
+      isNew: false,
       date: '22 апреля, 10:55',
       text: 'Пользователь предложил добавить приём пластиковых бутылок 05 (PP) и изменить время работы на выходных до 20:00.'
+    },
+    // --- Исходящие (НОВЫЕ) ---
+    {
+      id: 3,
+      type: 'outgoing',
+      pointName: 'Пункт сбора «Добрый лес»',
+      address: 'г. Березовский, ул. Красных Героев, 3 • Модератор',
+      category: 'Уведомление',
+      isNew: false, // У исходящих нет точки-индикатора новизны
+      date: '24 апреля, 10:20',
+      text: 'Приносите более 5 кг бумаги и получайте бонусную карту партнера со скидкой 10% на кофе!'
+    },
+    {
+      id: 4,
+      type: 'outgoing',
+      pointName: 'Пункт сбора «Уралвторма»',
+      address: 'г. Екатеринбург, ул. Чайковского, 82а • Модератор',
+      category: 'Уведомление',
+      isNew: false,
+      date: '20 марта, 11:55',
+      text: 'В эту субботу пункт приема закрыт по техническим причинам.'
     }
   ]);
+
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [notificationToDelete, setNotificationToDelete] = useState(null);
+
+  const [showPublishModal, setShowPublishModal] = useState(false);
 
   const markAllAsRead = () => {
     setMockNotifications(prev => prev.map(notif => ({ ...notif, isNew: false })));
@@ -1972,10 +2000,8 @@ const Profile = ({ currentUser, onLogout }) => {
         {activeTab === 'notifications' && (
           <div className="d-flex flex-column gap-4" style={{ maxWidth: '800px' }}>
             
-            {/* Панель управления: Входящие/Исходящие и "Пометить всё" */}
-            <div className="d-flex justify-content-between align-items-center">
-              
-              {/* Переключатель */}
+            {/* Панель переключателя: Входящие/Исходящие */}
+            <div className="d-flex justify-content-between align-items-center mb-1">
               <div 
                 className="d-flex p-1" 
                 style={{ border: '1px solid #E7EFE8', borderRadius: '40px', backgroundColor: '#FFFFFF' }}
@@ -1984,9 +2010,7 @@ const Profile = ({ currentUser, onLogout }) => {
                   onClick={() => setNotificationTab('incoming')}
                   className="btn rounded-pill border-0" 
                   style={{ 
-                    padding: '8px 24px', 
-                    fontSize: '14px', 
-                    fontWeight: '500',
+                    padding: '8px 24px', fontSize: '14px', fontWeight: '500',
                     backgroundColor: notificationTab === 'incoming' ? '#18442A' : 'transparent',
                     color: notificationTab === 'incoming' ? '#FFFFFF' : '#18442A'
                   }}
@@ -1997,9 +2021,7 @@ const Profile = ({ currentUser, onLogout }) => {
                   onClick={() => setNotificationTab('outgoing')}
                   className="btn rounded-pill border-0" 
                   style={{ 
-                    padding: '8px 24px', 
-                    fontSize: '14px', 
-                    fontWeight: '500',
+                    padding: '8px 24px', fontSize: '14px', fontWeight: '500',
                     backgroundColor: notificationTab === 'outgoing' ? '#18442A' : 'transparent',
                     color: notificationTab === 'outgoing' ? '#FFFFFF' : '#18442A'
                   }}
@@ -2008,22 +2030,53 @@ const Profile = ({ currentUser, onLogout }) => {
                 </button>
               </div>
 
-              {/* Кнопка Пометить прочитанным (показываем только для входящих) */}
+              {/* Правая часть: кнопка Пометить прочитанным для Входящих */}
               {notificationTab === 'incoming' && (
                 <span 
                   onClick={markAllAsRead}
                   style={{ 
-                    color: '#18442A', // ИСПРАВЛЕНИЕ: Цвет #18442A
-                    fontSize: '14px', 
-                    textDecoration: 'underline', 
-                    cursor: 'pointer',
-                    fontWeight: '500'
+                    color: '#18442A', fontSize: '14px', textDecoration: 'underline', 
+                    cursor: 'pointer', fontWeight: '500'
                   }}
                 >
                   Пометить все прочитанным
                 </span>
               )}
             </div>
+
+            {/* Панель поиска и создания уведомления (только для Исходящих) */}
+            {notificationTab === 'outgoing' && (
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <div className="position-relative" style={{ width: '400px' }}>
+                  <input 
+                    type="text" 
+                    placeholder="Поиск по названию..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="form-control shadow-none" 
+                    style={{ 
+                      borderRadius: '24px', border: '1px solid #18442A', 
+                      padding: '10px 16px 10px 20px', fontSize: '14px', color: '#18442A' 
+                    }} 
+                  />
+                  <i 
+                    className="bi bi-search position-absolute" 
+                    style={{ right: '16px', top: '50%', transform: 'translateY(-50%)', color: '#18442A', fontSize: '16px' }}
+                  ></i>
+                </div>
+                
+                <button 
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="btn" 
+                  style={{ 
+                    backgroundColor: '#18442A', color: 'white', borderRadius: '24px', 
+                    padding: '10px 24px', fontSize: '14px', fontWeight: '500', border: 'none'
+                  }}
+                >
+                  Создать уведомление +
+                </button>
+              </div>
+            )}
 
             {/* Список уведомлений */}
             <div className="d-flex flex-column gap-3 mt-2">
@@ -2035,10 +2088,7 @@ const Profile = ({ currentUser, onLogout }) => {
                     <div 
                       key={notif.id} 
                       style={{ 
-                        backgroundColor: '#FFFFFF', 
-                        borderRadius: '16px', 
-                        border: '1px solid #E7EFE8', 
-                        boxShadow: '0 4px 24px rgba(0,0,0,0.02)',
+                        ...cardStyle, // ПРИМЕНЯЕМ ЕДИНЫЙ СТИЛЬ С ТЕНЬЮ И БЕЗ РАМОК
                         transition: 'all 0.3s ease' 
                       }}
                     >
@@ -2095,11 +2145,35 @@ const Profile = ({ currentUser, onLogout }) => {
 
                       {/* Развернутый текст */}
                       {isExpanded && (
-                        <div className="px-4 pb-4 pt-1" style={{ paddingLeft: '60px' }}> {/* Отступ слева чтобы текст шел вровень с заголовком */}
-                          <hr style={{ borderColor: '#E7EFE8', margin: '0 0 16px 0' }} />
-                          <p style={{ color: '#18442A', fontSize: '14px', lineHeight: '1.6', margin: 0 }}>
+                        <div 
+                          className="pe-4 pb-4 pt-1" 
+                          style={{ 
+                            // 24px (стандартный паддинг карточки) + 28px (отступ под невидимую точку) = 52px
+                            // Это выстроит линию, текст и кнопку идеально в ровную вертикальную линию с заголовком!
+                            paddingLeft: '52px' 
+                          }}
+                        >
+                          <hr style={{ borderColor: '#F4F6E3', borderWidth: '1px', opacity: 1, margin: '0 0 20px 0' }} />
+                          
+                          <p style={{ color: '#18442A', fontSize: '15px', lineHeight: '1.6', margin: '0 0 16px 0', fontWeight: '400' }}>
                             {notif.text}
                           </p>
+                          
+                          {/* Кнопка "Удалить" ТОЛЬКО для исходящих уведомлений */}
+                          {notif.type === 'outgoing' && (
+                            <div 
+                              className="d-flex align-items-center" 
+                              style={{ color: '#FF8A8A', cursor: 'pointer', fontSize: '15px', fontWeight: '400', marginTop: '16px' }} 
+                              onClick={(e) => { 
+                                e.stopPropagation(); 
+                                setNotificationToDelete(notif.id); // Запоминаем, что именно удаляем
+                                setShowDeleteModal(true);          // Открываем модалку
+                              }}
+                            >
+                              Удалить
+                              <img src="/icons/trash.png" alt="delete" style={{ width: '16px', marginLeft: '8px' }} />
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -2109,7 +2183,7 @@ const Profile = ({ currentUser, onLogout }) => {
               {/* Пустое состояние */}
               {mockNotifications.filter(n => n.type === notificationTab).length === 0 && (
                 <div className="text-center py-5" style={{ color: '#A0A0A0' }}>
-                  Здесь пока нет уведомлений
+                  У вас нет исходящих уведомлений.
                 </div>
               )}
             </div>
@@ -2210,17 +2284,14 @@ const Profile = ({ currentUser, onLogout }) => {
             {/* Кнопки "Отмена" и "Опубликовать" */}
             <div className="d-flex justify-content-between align-items-center mt-3">
               <span 
-                onClick={() => setIsCreateModalOpen(false)}
+                onClick={() => setShowCancelModal(true)}
                 style={{ fontSize: '13px', color: '#18442A', cursor: 'pointer', fontWeight: '500' }}
               >
                 Отмена
               </span>
               <button 
                 className="btn border-0" 
-                onClick={() => {
-                  alert("Уведомление опубликовано!");
-                  setIsCreateModalOpen(false);
-                }}
+                onClick={() => setShowPublishModal(true)} // Открываем окно подтверждения
                 style={{ 
                   backgroundColor: '#18442A', 
                   color: 'white', 
@@ -2234,6 +2305,240 @@ const Profile = ({ currentUser, onLogout }) => {
               </button>
             </div>
             
+          </div>
+        </div>
+      )}
+      
+      {/* --------------------------------------------------- */}
+      {/* МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ ОТМЕНЫ */}
+      {/* --------------------------------------------------- */}
+      {showCancelModal && (
+        <div 
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+          style={{ 
+            backgroundColor: 'rgba(255, 255, 255, 0.4)', 
+            backdropFilter: 'blur(8px)',                  
+            WebkitBackdropFilter: 'blur(8px)',            
+            zIndex: 10000                                 
+          }}
+        >
+          <div 
+            className="bg-white d-flex flex-column align-items-center text-center" 
+            style={{ 
+              width: '640px', // ПРАВКА 3: Чуть увеличили ширину, чтобы тексту хватило места
+              padding: '48px 40px',
+              borderRadius: '24px', 
+              boxShadow: '0px 16px 60px rgba(0, 0, 0, 0.12)', // ПРАВКА 1: Убрали рамку и сделали красивую тень
+              border: 'none' // Убираем серый контур
+            }}
+          >
+            {/* Иконка предупреждения */}
+            <div style={{ width: '72px', height: '72px', backgroundColor: '#FFE5E5', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '24px' }}>
+              {/* ПРАВКА 2: Увеличили SVG с 36x36 до 48x48. Сделали круг шире (r="11"), а знак толще */}
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="11" stroke="#FF8A8A" strokeWidth="2"/>
+                <path d="M12 6V14" stroke="#FF8A8A" strokeWidth="2.5" strokeLinecap="round"/>
+                <circle cx="12" cy="17.5" r="1.5" fill="#FF8A8A"/>
+              </svg>
+            </div>
+
+            <h2 style={{ margin: '0 0 16px 0', fontSize: '28px', fontWeight: '700', color: '#18442A', fontFamily: '"Actay", sans-serif' }}>
+              Подтверждение отмены
+            </h2>
+
+            {/* ПРАВКА 3: Добавили whiteSpace: 'nowrap', чтобы запретить браузеру переносить слова. Перенос будет ТОЛЬКО там, где стоит <br/> */}
+            <p style={{ margin: '0 0 40px 0', fontSize: '18px', color: '#18442A', lineHeight: '1.5', whiteSpace: 'nowrap' }}>
+              Вы уверены, что хотите отменить создание<br/>
+              уведомления? Черновик при отмене не сохранится.
+            </p>
+
+            <div className="d-flex justify-content-between w-100 align-items-center px-2">
+              <span 
+                onClick={() => setShowCancelModal(false)}
+                style={{ fontSize: '18px', color: '#18442A', cursor: 'pointer', fontWeight: '400' }}
+              >
+                Назад
+              </span>
+              
+              <button 
+                className="btn"
+                onClick={() => {
+                  setShowCancelModal(false);
+                  setIsCreateModalOpen(false); 
+                }}
+                style={{
+                  backgroundColor: '#FF8A8A',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '12px 32px',
+                  fontSize: '18px',
+                  fontWeight: '400',
+                  fontFamily: 'inherit'
+                }}
+              >
+                Отменить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+            {/* --------------------------------------------------- */}
+      {/* МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ ПУБЛИКАЦИИ */}
+      {/* --------------------------------------------------- */}
+      {showPublishModal && (
+        <div 
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+          style={{ 
+            backgroundColor: 'rgba(255, 255, 255, 0.4)', 
+            backdropFilter: 'blur(8px)',                  
+            WebkitBackdropFilter: 'blur(8px)',            
+            zIndex: 10000 // Поверх окна создания
+          }}
+        >
+          <div 
+            className="bg-white d-flex flex-column align-items-center text-center" 
+            style={{ 
+              width: '680px', // Чуть шире, так как текста больше
+              padding: '48px 40px',
+              borderRadius: '24px', 
+              boxShadow: '0px 16px 60px rgba(0, 0, 0, 0.12)', 
+              border: 'none' 
+            }}
+          >
+            {/* Иконка предупреждения (зеленая) */}
+            <div style={{ width: '72px', height: '72px', backgroundColor: '#F4F6E3', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '24px' }}>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="11" stroke="#6BAD86" strokeWidth="2"/>
+                <path d="M12 6V14" stroke="#6BAD86" strokeWidth="2.5" strokeLinecap="round"/>
+                <circle cx="12" cy="17.5" r="1.5" fill="#6BAD86"/>
+              </svg>
+            </div>
+
+            <h2 style={{ margin: '0 0 16px 0', fontSize: '28px', fontWeight: '700', color: '#18442A', fontFamily: '"Actay", sans-serif' }}>
+              Подтверждение публикации
+            </h2>
+
+            <p style={{ margin: '0 0 40px 0', fontSize: '18px', color: '#18442A', lineHeight: '1.5', whiteSpace: 'nowrap' }}>
+              Вы уверены в корректности написанного текста<br/>
+              акции? После публикации текст акции нельзя будет<br/>
+              редактировать. Просмотреть или удалить<br/>
+              уведомление можно будет в разделе «Исходящие».
+            </p>
+
+            <div className="d-flex justify-content-between w-100 align-items-center px-2">
+              <span 
+                onClick={() => setShowPublishModal(false)}
+                style={{ fontSize: '18px', color: '#18442A', cursor: 'pointer', fontWeight: '400' }}
+              >
+                Назад
+              </span>
+              
+              <button 
+                className="btn"
+                onClick={() => {
+                  // Логика успешной публикации
+                  setNotification({ show: true, title: 'Готово!', message: 'Уведомление успешно опубликовано.' });
+                  setTimeout(() => setNotification({ show: false, title: '', message: '' }), 3000);
+                  
+                  // Закрываем оба окна
+                  setShowPublishModal(false);
+                  setIsCreateModalOpen(false);
+                }}
+                style={{
+                  backgroundColor: '#18442A',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '12px 32px',
+                  fontSize: '18px',
+                  fontWeight: '400',
+                  fontFamily: 'inherit'
+                }}
+              >
+                Опубликовать
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* --------------------------------------------------- */}
+      {/* МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ УДАЛЕНИЯ */}
+      {/* --------------------------------------------------- */}
+      {showDeleteModal && (
+        <div 
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+          style={{ 
+            backgroundColor: 'rgba(255, 255, 255, 0.4)', 
+            backdropFilter: 'blur(8px)',                  
+            WebkitBackdropFilter: 'blur(8px)',            
+            zIndex: 10000                                 
+          }}
+        >
+          <div 
+            className="bg-white d-flex flex-column align-items-center text-center" 
+            style={{ 
+              width: '640px', 
+              padding: '48px 40px',
+              borderRadius: '24px', 
+              boxShadow: '0px 16px 60px rgba(0, 0, 0, 0.12)', 
+              border: 'none' 
+            }}
+          >
+            {/* Иконка предупреждения */}
+            <div style={{ width: '72px', height: '72px', backgroundColor: '#FFE5E5', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '24px' }}>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="11" stroke="#FF8A8A" strokeWidth="2"/>
+                <path d="M12 6V14" stroke="#FF8A8A" strokeWidth="2.5" strokeLinecap="round"/>
+                <circle cx="12" cy="17.5" r="1.5" fill="#FF8A8A"/>
+              </svg>
+            </div>
+
+            <h2 style={{ margin: '0 0 16px 0', fontSize: '28px', fontWeight: '700', color: '#18442A', fontFamily: '"Actay", sans-serif' }}>
+              Подтверждение удаления
+            </h2>
+
+            <p style={{ margin: '0 0 40px 0', fontSize: '18px', color: '#18442A', lineHeight: '1.5', whiteSpace: 'nowrap' }}>
+              Вы уверены, что хотите удалить это уведомление?<br/>
+              Оно исчезнет с карты и из личного кабинета.
+            </p>
+
+            <div className="d-flex justify-content-between w-100 align-items-center px-2">
+              <span 
+                onClick={() => setShowDeleteModal(false)}
+                style={{ fontSize: '18px', color: '#18442A', cursor: 'pointer', fontWeight: '400' }}
+              >
+                Отмена
+              </span>
+              
+              <button 
+                className="btn"
+                onClick={() => {
+                  // Здесь логика удаления. Пока просто убираем из мокового массива:
+                  setMockNotifications(prev => prev.filter(n => n.id !== notificationToDelete));
+                  setNotification({ show: true, title: 'Готово!', message: 'Уведомление успешно удалено.' });
+                  setTimeout(() => setNotification({ show: false, title: '', message: '' }), 3000);
+                  
+                  // Закрываем модалку
+                  setShowDeleteModal(false);
+                  setNotificationToDelete(null);
+                }}
+                style={{
+                  backgroundColor: '#FF8A8A',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '12px 32px',
+                  fontSize: '18px',
+                  fontWeight: '400',
+                  fontFamily: 'inherit'
+                }}
+              >
+                Удалить
+              </button>
+            </div>
           </div>
         </div>
       )}
