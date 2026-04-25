@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'django_filters',
     'corsheaders',
     'django.contrib.gis',
+    'rest_framework_simplejwt',
+    'djoser',
 ]
 
 MIDDLEWARE = [
@@ -162,3 +164,13 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+
+DJOSER = {
+    'LOGIN_FIELD': 'username',
+    'USER_CREATE_PASSWORD_RETYPE': False, # Требовать ли подтверждение пароля при регистрации
+    'SERIALIZERS': {
+        'user_create': 'djoser.serializers.UserCreateSerializer',
+        'current_user': 'djoser.serializers.UserSerializer',
+    },
+}

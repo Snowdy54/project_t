@@ -28,7 +28,7 @@ class PointViewSet(viewsets.ModelViewSet):
     queryset = Point.objects.all()
     serializer_class = PointSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['accepted_waste', 'owner'] # Чтобы можно было найти все точки одного владельца
+    filterset_fields = ['owner'] # Чтобы можно было найти все точки одного владельца
 
 class PointWastePriceViewSet(viewsets.ModelViewSet):
     queryset = PointWastePrice.objects.all()
