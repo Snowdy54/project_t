@@ -1502,16 +1502,16 @@ const Profile = ({ currentUser, onLogout }) => {
     email: '',
     city: '',
     phone: '',
-    about: ''
+    about: '',
+    avatar: null
   });
 
-  // Загрузка реальных данных профиля с бэкенда
+  const fileInputRef = useRef(null);
+
+  // 1. Загрузка реальных данных профиля с бэкенда
   useEffect(() => {
     const fetchProfileData = async () => {
       const token = localStorage.getItem('access_token');
-      
-      // 1. ПРОВЕРКА ТОКЕНА
-      console.log('Текущий токен из localStorage:', token); 
       
       if (!token) {
         console.warn('Токена нет! Запрос к профилю отменен.');
@@ -1521,33 +1521,51 @@ const Profile = ({ currentUser, onLogout }) => {
       try {
         const response = await axios.get('http://127.0.0.1:8000/api/profile/', {
           headers: {
-            // 2. ИСПРАВЛЕНИЕ: Некоторые бэкенды на Django с SimpleJWT 
-            // требуют префикс 'JWT ' вместо 'Bearer '.
-            // Попробуем отправить с 'Bearer', но если у Андрея стандартные 
-            // настройки Djoser/SimpleJWT, то может потребоваться 'JWT'.
             Authorization: `Bearer ${token}` 
           }
         });
         
         console.log('✅ Данные профиля получены:', response.data);
         
-        setFormData(prev => ({
+        setFormData( prev => ({
           ...prev,
           firstName: response.data.first_name || '',
           lastName: response.data.last_name || '',
-          email: response.data.email || ''
+          email: response.data.email || '',
+          city: response.data.city || '',
+          phone: response.data.phone || '',
+          about: response.data.about || '',
+          avatar: response.data.avatar || null
         }));
 
       } catch (err) {
         console.error('❌ Ошибка загрузки профиля:', err);
-        if (err.response) {
-            console.error('Ответ сервера:', err.response.data);
-        }
       }
     };
 
     fetchProfileData();
   }, []);
+
+  // 2. Функция загрузки аватарки 
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Для файлов нужен специальный формат FormData
+    const uploadData = new FormData();
+    uploadData.append('avatar', file);
+
+    try {
+      const response = await authService.updateProfile(uploadData);
+      // Сразу обновляем картинку на экране
+      setFormData(prev => ({ ...prev, avatar: response.avatar }));
+      setNotification({ show: true, title: 'Успешно!', message: 'Аватар обновлен.' });
+      setTimeout(() => setNotification({ show: false, title: '', message: '' }), 3000);
+    } catch (error) {
+      console.error("Ошибка загрузки аватара:", error);
+      alert("Не удалось загрузить аватар.");
+    }
+  };
 
   const [isPasswordEditMode, setIsPasswordEditMode] = useState(false);
   const [passwordData, setPasswordData] = useState({
@@ -1601,18 +1619,51 @@ const Profile = ({ currentUser, onLogout }) => {
     setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
   };
 
-  const handleSaveProfile = (e) => {
+  const handleSaveProfile = async (e) => {
     e.preventDefault();
-    setNotification({ show: true, title: 'Готово!', message: 'Изменения сохранены.' });
-    setTimeout(() => setNotification({ show: false, title: '', message: '' }), 3000);
+    try {
+      const payload = {
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        city: formData.city,
+        phone: formData.phone,
+        about: formData.about
+      };
+      await authService.updateProfile(payload); // Реальный вызов API
+      setNotification({ show: true, title: 'Готово!', message: 'Изменения сохранены.' });
+      setTimeout(() => setNotification({ show: false, title: '', message: '' }), 3000);
+    } catch (error) {
+      console.error("Ошибка при сохранении:", error);
+    }
   };
 
-  const handleSavePassword = (e) => {
+  // 3. НОВАЯ ФУНКЦИЯ СОХРАНЕНИЯ ПАРОЛЯ
+  const handleSavePassword = async (e) => {
     e.preventDefault();
-    setIsPasswordEditMode(false);
-    setPasswordData({ current: '', new: '', confirm: '' });
-    setNotification({ show: true, title: 'Готово!', message: 'Пароль успешно изменен.' });
-    setTimeout(() => setNotification({ show: false, title: '', message: '' }), 3000);
+    
+    if (passwordData.new !== passwordData.confirm) {
+      alert("Новые пароли не совпадают!");
+      return;
+    }
+
+    try {
+      await authService.changePassword({
+        old_password: passwordData.current,
+        new_password: passwordData.new
+      });
+
+      setIsPasswordEditMode(false);
+      setPasswordData({ current: '', new: '', confirm: '' });
+      setNotification({ show: true, title: 'Готово!', message: 'Пароль успешно изменен.' });
+      setTimeout(() => setNotification({ show: false, title: '', message: '' }), 3000);
+    } catch (error) {
+      console.error("Ошибка при смене пароля:", error);
+      if (error.response && error.response.data && error.response.data.old_password) {
+        alert(error.response.data.old_password[0]);
+      } else {
+        alert("Не удалось изменить пароль. Проверьте введенные данные.");
+      }
+    }
   };
 
   // Общий стиль для всех карточек (без обводки, с тенью)
@@ -1719,6 +1770,7 @@ const Profile = ({ currentUser, onLogout }) => {
             <div className="d-flex flex-column gap-4" style={{ width: '320px', flexShrink: 0 }}>
               
               {/* ИСПРАВЛЕНИЕ 2: Карточка профиля с тенью */}
+              {/* Карточка профиля с тенью */}
               <div className="p-4 text-center position-relative" style={cardStyle}>
                 <div 
                   className="mx-auto rounded-circle d-flex justify-content-center align-items-center position-relative" 
@@ -1726,14 +1778,35 @@ const Profile = ({ currentUser, onLogout }) => {
                     width: '120px', height: '120px', 
                     background: '#F4F6E3',
                     border: '3px solid transparent',
-                    backgroundImage: 'linear-gradient(#F4F6E3, #F4F6E3), linear-gradient(180deg, #18442A 0%, #417858 50%, #6BAD86 100%)',
+                    // Убираем градиентную обводку, если аватар уже загружен, чтобы было красивее
+                    backgroundImage: formData.avatar ? 'none' : 'linear-gradient(#F4F6E3, #F4F6E3), linear-gradient(180deg, #18442A 0%, #417858 50%, #6BAD86 100%)',
                     backgroundOrigin: 'border-box',
                     backgroundClip: 'content-box, border-box'
                   }}
                 >
-                  <i className="bi bi-person-fill position-relative" style={{ fontSize: '60px', color: '#6BAD86', top: '4px' }}></i>
+                  {/* ЕСЛИ ЕСТЬ АВАТАР - ПОКАЗЫВАЕМ ЕГО, ИНАЧЕ - СМАЙЛИК */}
+                  {formData.avatar ? (
+                    <img 
+                      src={formData.avatar.startsWith('http') ? formData.avatar : `http://127.0.0.1:8000${formData.avatar}`} 
+                      alt="avatar" 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} 
+                    />
+                  ) : (
+                    <i className="bi bi-person-fill position-relative" style={{ fontSize: '60px', color: '#6BAD86', top: '4px' }}></i>
+                  )}
                   
+                  {/* СКРЫТЫЙ ИНПУТ ДЛЯ ФАЙЛА */}
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={handleAvatarChange} 
+                    style={{ display: 'none' }} 
+                    accept="image/*"
+                  />
+
+                  {/* КНОПКА РЕДАКТИРОВАНИЯ (КАРАНДАШ) */}
                   <div 
+                    onClick={() => fileInputRef.current.click()}
                     className="position-absolute d-flex justify-content-center align-items-center shadow-sm" 
                     style={{ 
                       width: '32px', height: '32px', 
@@ -1741,13 +1814,17 @@ const Profile = ({ currentUser, onLogout }) => {
                       borderRadius: '50%', 
                       bottom: '-2px', right: '-2px', 
                       cursor: 'pointer',
-                      border: '3px solid #FFFFFF'
+                      border: '3px solid #FFFFFF',
+                      zIndex: 2
                     }}
                   >
                     <img src="/icons/pencil_filled.png" alt="edit" style={{ width: '14px', height: '14px' }} />
                   </div>
                 </div>
-                <h5 className="mt-3 mb-3" style={{ color: '#18442A', fontWeight: '700', fontSize: '18px' }}>Имя Фамилия</h5>
+                
+                <h5 className="mt-3 mb-3" style={{ color: '#18442A', fontWeight: '700', fontSize: '18px' }}>
+                  {formData.firstName || formData.lastName ? `${formData.firstName} ${formData.lastName}`.trim() : 'Имя Фамилия'}
+                </h5>
                 
                 {/* ИСПРАВЛЕНИЕ 3: Полоса цвета #F4F6E3 и не прилипает к краям (убран margin: '0 -24px') */}
                 <div style={{ borderTop: '2px solid #F4F6E3', marginTop: '16px', paddingTop: '16px' }}>
@@ -1803,15 +1880,18 @@ const Profile = ({ currentUser, onLogout }) => {
                     <h6 style={{ color: '#18442A', fontWeight: '700', fontSize: '14px', marginBottom: '20px' }}>Личные данные</h6>
                     <div className="mb-3">
                       <label style={{ fontSize: '13px', color: '#18442A', marginBottom: '6px', display: 'block' }}>Имя*</label>
-                      <input type="text" name="firstName" placeholder="Введите ваше имя" className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '10px 12px' }} />
+                      {/* ДОБАВЛЕНО value и onChange */}
+                      <input type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} placeholder="Введите ваше имя" className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '10px 12px' }} />
                     </div>
                     <div className="mb-3">
                       <label style={{ fontSize: '13px', color: '#18442A', marginBottom: '6px', display: 'block' }}>Фамилия*</label>
-                      <input type="text" name="lastName" placeholder="Введите вашу фамилию" className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '10px 12px' }} />
+                      {/* ДОБАВЛЕНО value и onChange */}
+                      <input type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} placeholder="Введите вашу фамилию" className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '10px 12px' }} />
                     </div>
                     <div className="mb-3">
                       <label style={{ fontSize: '13px', color: '#18442A', marginBottom: '6px', display: 'block' }}>Город проживания</label>
-                      <input type="text" name="city" placeholder="Начните вводить..." className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '10px 12px' }} />
+                      {/* ДОБАВЛЕНО value и onChange */}
+                      <input type="text" name="city" value={formData.city} onChange={handleInputChange} placeholder="Начните вводить..." className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '10px 12px' }} />
                     </div>
                   </div>
 
@@ -1821,19 +1901,22 @@ const Profile = ({ currentUser, onLogout }) => {
                       <label style={{ fontSize: '13px', color: '#18442A', marginBottom: '6px', display: 'block' }}>Email*</label>
                       <div className="position-relative">
                         <img src="/icons/mail.png" alt="mail" style={{ width: '16px', position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
-                        <input type="email" name="email" placeholder="Введите ваш email" className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '10px 12px 10px 38px' }} />
+                        {/* ДОБАВЛЕНО value и onChange. Сделали disabled, так как email обычно меняют по-другому */}
+                        <input type="email" name="email" value={formData.email} onChange={handleInputChange} disabled placeholder="Введите ваш email" className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '10px 12px 10px 38px', backgroundColor: '#f9f9f9' }} />
                       </div>
                     </div>
                     <div className="mb-3">
                       <label style={{ fontSize: '13px', color: '#18442A', marginBottom: '6px', display: 'block' }}>Номер телефона</label>
-                      <input type="tel" name="phone" placeholder="+ 7 (___) - ___ - __ - __" className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '10px 12px' }} />
+                      {/* ДОБАВЛЕНО value и onChange */}
+                      <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="+ 7 (___) - ___ - __ - __" className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '10px 12px' }} />
                     </div>
                   </div>
                 </div>
 
                 <div className="mb-5">
                   <label style={{ fontSize: '13px', color: '#18442A', marginBottom: '6px', display: 'block' }}>Обо мне</label>
-                  <textarea name="about" placeholder="Расскажите о себе" className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '12px', minHeight: '100px', resize: 'none' }}></textarea>
+                  {/* ДОБАВЛЕНО value и onChange в textarea */}
+                  <textarea name="about" value={formData.about} onChange={handleInputChange} placeholder="Расскажите о себе" className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '12px', minHeight: '100px', resize: 'none' }}></textarea>
                 </div>
 
                 <div className="d-flex align-items-center gap-4">
