@@ -23,10 +23,28 @@ export const authService = {
 
   // Получить профиль текущего пользователя
   getProfile: async () => {
-    const response = await api.get('profile/');
+      const response = await api.get('profile/');
+      return response.data;
+  },
+
+    // Добавьте это:
+  updateProfile: async (profileData) => {
+      const isFormData = profileData instanceof FormData;
+    
+      const response = await api.patch('profile/', profileData, {
+        headers: {
+          'Content-Type': isFormData ? 'multipart/form-data' : 'application/json'
+        }
+      });
+      return response.data;
+  },
+
+  changePassword: async (passwordData) => {
+    const response = await api.post('change-password/', passwordData);
     return response.data;
   }
 };
+
 
 export const pointService = {
   // Получить все точки

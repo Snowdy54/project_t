@@ -48,11 +48,30 @@ class NotificationAdmin(admin.ModelAdmin):
     list_display = ('user', 'title', 'is_read', 'created_at')
     list_filter = ('is_read', 'created_at')
 
-# Регистрируем пользователя с его стандартной админкой
-admin.site.register(User, UserAdmin)
+
+# Регистрируем WasteType
 admin.site.register(WasteType)
 
 @admin.register(PointWastePrice)
 class PointWastePriceAdmin(admin.ModelAdmin):
     list_display = ('point', 'waste_type', 'item_spec', 'price_per_kg', 'is_available')
     list_filter = ('waste_type', 'point', 'is_available')
+
+
+# =========================================================
+# РЕГИСТРАЦИЯ ПОЛЬЗОВАТЕЛЯ С НОВЫМИ ПОЛЯМИ
+# =========================================================
+
+# 1. Отменяем любую старую регистрацию юзера (чтобы избежать ошибки AlreadyRegistered)
+try:
+    admin.site.unregister(User)
+except admin.sites.NotRegistered:
+    pass
+
+# 2. Регистрируем кастомную админку с добавленными полями
+@admin.register(User)
+class CustomUserAdmin(UserAdmin):
+    model = User
+    fieldsets = UserAdmin.fieldsets + (
+        ('Дополнительная информация (Профиль)', {'fields': ('city', 'phone', 'about', 'avatar')}),
+    )

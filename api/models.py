@@ -5,6 +5,10 @@ from django.contrib.gis.geos import Point as GEOSPoint
 
 class User(AbstractUser):
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True, verbose_name="Аватар")
+    city = models.CharField(max_length=100, blank=True, null=True, verbose_name="Город")
+    email = models.CharField(max_length=30, blank=True, null=True, verbose_name="Почта")
+    phone = models.CharField(max_length=20, blank=True, null=True, verbose_name="Телефон")
+    about = models.TextField(blank=True, null=True, verbose_name="О себе")
 
     class Meta:
         verbose_name = "Пользователь"

@@ -11,3 +11,6 @@ urlpatterns = [
     path('api/auth/', include('djoser.urls')),          # Даст эндпоинт /api/auth/users/ (для регистрации)
     path('api/auth/', include('djoser.urls.jwt')), 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

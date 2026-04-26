@@ -16,13 +16,25 @@ from .serializers import (
 )
 from .permissions import IsPointOwner
 
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+
 
 class UserProfileView(APIView):
     permission_classes = [drf_permissions.IsAuthenticated]
+    
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get(self, request):
         serializer = UserProfileSerializer(request.user)
         return Response(serializer.data)
+
+    def patch(self, request):
+        serializer = UserProfileSerializer(request.user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        print("ОШИБКА СОХРАНЕНИЯ ПРОФИЛЯ:", serializer.errors)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class PointViewSet(viewsets.ModelViewSet):
     queryset = Point.objects.all()
