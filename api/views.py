@@ -4,6 +4,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated # Добавь прямой импорт сюда
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import viewsets, permissions
+from .models import Review, Notification
+from .serializers import ReviewSerializer, NotificationSerializer
+
 
 from .models import Point, PointWastePrice
 from .serializers import (
@@ -64,3 +68,21 @@ class ChangePasswordView(APIView):
             user.save()
             return Response({"message": "Пароль успешно изменен"}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class ReviewViewSet(viewsets.ModelViewSet):
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def perform_create(self, serializer):
+        # Автоматически привязываем текущего юзера как автора отзыва
+        serializer.save(user=self.request.user)
+
+class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
+    """Только для чтения и обновления статуса is_read"""
+    serializer_class = NotificationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Юзер видит только свои уведомления
+        return Notification.objects.filter(user=self.request.user).order_set('-created_at')

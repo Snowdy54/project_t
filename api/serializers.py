@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Point, PointWastePrice, WasteType
+from .models import Point, PointWastePrice, WasteType, Review, Notification  # ДОБАВИЛИ Review и Notification
+from django.db.models import Avg
 
 User = get_user_model()
 
@@ -16,8 +17,23 @@ class PointWastePriceSerializer(serializers.ModelSerializer):
         model = PointWastePrice
         fields = ['id', 'waste_type', 'waste_type_name', 'price_per_kg', 'unit', 'is_available']
 
+class ReviewSerializer(serializers.ModelSerializer):
+    user_name = serializers.ReadOnlyField(source='user.username')
+
+    class Meta:
+        model = Review
+        fields = ['id', 'user', 'user_name', 'rating', 'text', 'created_at']
+
+# ПЕРЕМЕСТИЛИ ВЫШЕ, чтобы UserProfileSerializer его видел
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ['id', 'title', 'message', 'is_read', 'created_at']
+
 class PointSerializer(serializers.ModelSerializer):
     prices = PointWastePriceSerializer(many=True, read_only=True)
+    reviews = ReviewSerializer(many=True, read_only=True) 
+    average_rating = serializers.SerializerMethodField()
     coords = serializers.SerializerMethodField()
     accepted_waste = serializers.SerializerMethodField()
 
@@ -25,9 +41,14 @@ class PointSerializer(serializers.ModelSerializer):
         model = Point
         fields = [
             'id', 'name', 'address', 'latitude', 'longitude', 
-            'location', 'coords', 'status', 'inn', 'legal_entity', 
-            'prices', 'accepted_waste', 'working_hours', 'phone', 'description' 
+            'coords', 'status', 'inn', 'legal_entity', 
+            'prices', 'accepted_waste', 'reviews', 'average_rating', 
+            'working_hours', 'phone', 'description' 
         ]
+
+    def get_average_rating(self, obj):
+        avg = obj.reviews.aggregate(Avg('rating'))['rating__avg']
+        return round(avg, 1) if avg else 0
 
     def get_coords(self, obj):
         if obj.location:
@@ -35,21 +56,18 @@ class PointSerializer(serializers.ModelSerializer):
         return None
 
     def get_accepted_waste(self, obj):
-        # Достаем названия типов мусора только из тех цен, что сейчас доступны
         wastes = obj.prices.filter(is_available=True).values_list('waste_type__name', flat=True).distinct()
         return [{"name": name} for name in wastes]
-    
 
 class UserProfileSerializer(serializers.ModelSerializer):
     points = PointSerializer(many=True, read_only=True)
+    notifications = NotificationSerializer(many=True, read_only=True)
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'points']
-
+        fields = ['id', 'username', 'email', 'avatar', 'points', 'notifications']
 
 class RegisterSerializer(serializers.ModelSerializer):
-    # Пароль только для записи, в ответах API его не будет видно
     password = serializers.CharField(write_only=True)
 
     class Meta:
@@ -57,7 +75,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = ('username', 'password', 'email', 'first_name', 'last_name')
 
     def create(self, validated_data):
-        # Метод create_user автоматически зашифрует пароль
         user = User.objects.create_user(
             username=validated_data['username'],
             password=validated_data['password'],
@@ -66,7 +83,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             last_name=validated_data.get('last_name', ''),
         )
         return user
-    
+
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
