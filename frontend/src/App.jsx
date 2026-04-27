@@ -1383,7 +1383,8 @@ const MapPage = () => {
 const Articles = () => <div className="container-fluid mt-5 text-center"><h1>Статьи и подкасты</h1></div>;
 
 // ---- НАВИГАЦИЯ (ШАПКА) ----
-const CustomNavbar = () => {
+// ---- НАВИГАЦИЯ (ШАПКА) ----
+const CustomNavbar = ({ currentUser }) => { // Добавили пропс currentUser
   const location = useLocation();
 
   const navLinkStyle = (path) => ({
@@ -1440,51 +1441,33 @@ const CustomNavbar = () => {
           padding: '4px',
         }}
       >
-        <Link
-          to="/"
-          className={`text-decoration-none h-100 d-flex align-items-center justify-content-center flex-grow-1 ${location.pathname === '/' ? 'text-white' : ''}`}
-          style={navLinkStyle('/')}
-        >
-          Главная
-        </Link>
-
-        <Link
-          to="/map"
-          className={`text-decoration-none h-100 d-flex align-items-center justify-content-center flex-grow-1 ${location.pathname === '/map' ? 'text-white' : ''}`}
-          style={navLinkStyle('/map')}
-        >
-          Карта пунктов приема
-        </Link>
-
-        <Link
-          to="/articles"
-          className={`text-decoration-none h-100 d-flex align-items-center justify-content-center flex-grow-1 ${location.pathname === '/articles' ? 'text-white' : ''}`}
-          style={navLinkStyle('/articles')}
-        >
-          Статьи и подкасты
-        </Link>
+        <Link to="/" style={navLinkStyle('/')} className="text-decoration-none h-100 d-flex align-items-center justify-content-center flex-grow-1">Главная</Link>
+        <Link to="/map" style={navLinkStyle('/map')} className="text-decoration-none h-100 d-flex align-items-center justify-content-center flex-grow-1">Карта пунктов приема</Link>
+        <Link to="/articles" style={navLinkStyle('/articles')} className="text-decoration-none h-100 d-flex align-items-center justify-content-center flex-grow-1">Статьи и подкасты</Link>
       </div>
 
-      {/* ПРАВАЯ ЧАСТЬ */}
-      <div
-        className="d-flex justify-content-end align-items-center gap-3"
-        style={{ width: '220px' }}
-      >
-        <Link
-          to="/login"
-          className="text-decoration-none d-flex align-items-center justify-content-center"
-          style={rightButtonStyle('/login', false)}
-        >
-          Войти
-        </Link>
-
-        <Link
-          to="/profile"
-          className="text-decoration-none d-flex align-items-center justify-content-center"
-          style={rightButtonStyle('/profile', true)}
-        >
-          Личный кабинет
-        </Link>
+      {/* ПРАВАЯ ЧАСТЬ: УСЛОВНЫЙ РЕНДЕР */}
+      <div className="d-flex justify-content-end align-items-center gap-3" style={{ width: '220px' }}>
+                
+        {!currentUser ? (
+          // Если юзера нет — кнопка Войти
+          <Link
+            to="/login"
+            className="text-decoration-none d-flex align-items-center justify-content-center"
+            style={rightButtonStyle('/login', false)}
+          >
+            Войти
+          </Link>
+        ) : (
+          // Если юзер вошел — кнопка Личный кабинет
+          <Link
+            to="/profile"
+            className="text-decoration-none d-flex align-items-center justify-content-center"
+            style={rightButtonStyle('/profile', true)}
+          >
+            Личный кабинет
+          </Link>
+        )}        
       </div>
     </nav>
   );
@@ -2380,6 +2363,7 @@ function App() {
   const handleLogout = () => {
     authService.logout();
     setCurrentUser(null);
+    window.location.href = '/';
   };
 
   // Пока идет проверка токена, можно показать спиннер или пустой экран
@@ -2394,7 +2378,7 @@ function App() {
   return (
     <Router>
       {/* Передаем данные о юзере в шапку сайта */}
-      <CustomNavbar currentUser={currentUser} onLogout={handleLogout} />
+      <CustomNavbar currentUser={currentUser} />
       <Routes>
         <Route path="/" element={<Home />} />
         {/* Передаем currentUser в MapPage, чтобы там проверять, можно ли добавить точку */}
