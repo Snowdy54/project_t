@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { authService } from './api/services';
 
-const Login = () => {
+// ИСПРАВЛЕНИЕ: Добавили прием пропса setCurrentUser
+const Login = ({ setCurrentUser }) => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
@@ -21,11 +23,8 @@ const Login = () => {
     try {
       console.log('Попытка входа с данными:', formData);
       
-      // Отправляем логин и пароль на сервер
-      // В Django по умолчанию поле для логина называется username, даже если пользователь вводит email
-      // Отправляем логин и пароль на сервер
       const response = await axios.post('http://127.0.0.1:8000/api/token/', {
-        username: formData.email.split('@')[0], // <-- ИСПРАВЛЕНО ЗДЕСЬ
+        username: formData.email.split('@')[0], 
         password: formData.password
       });
 
@@ -35,12 +34,19 @@ const Login = () => {
       localStorage.setItem('access_token', response.data.access);
       localStorage.setItem('refresh_token', response.data.refresh);
       
+      // ИСПРАВЛЕНИЕ: Сразу получаем профиль и обновляем глобальное состояние (шапку)
+      try {
+        const userProfile = await authService.getProfile();
+        setCurrentUser(userProfile);
+      } catch (profileErr) {
+        console.error("Не удалось подтянуть профиль после входа", profileErr);
+      }
+
       // Перекидываем пользователя в профиль
       navigate('/profile');
 
     } catch (err) {
       console.error(err);
-      // Если сервер ответил ошибкой 401 (Не авторизован)
       if (err.response && err.response.status === 401) {
         setError('Неверный логин или пароль');
       } else {
@@ -50,7 +56,6 @@ const Login = () => {
   };
 
   return (
-    // Обертка на всю высоту экрана с белым фоном
     <div className="d-flex flex-column" style={{ minHeight: 'calc(100vh - 80px)', backgroundColor: '#FFFFFF' }}>
       
       {/* ЦЕНТРАЛЬНЫЙ КОНТЕНТ */}
@@ -94,7 +99,6 @@ const Login = () => {
           {/* ПРАВАЯ СВЕТЛАЯ ЧАСТЬ (ФОРМА) */}
           <div className="d-flex flex-column align-items-center p-5" style={{ width: '50%', height: '100%' }}>
             
-            {/* Блок заголовка: занимает свободное место сверху, чтобы отцентрироваться */}
             <div className="flex-grow-1 d-flex align-items-center justify-content-center">
               <h2 className="font-russkin m-0" style={{ fontSize: '42px', color: '#18442A' }}>АВТОРИЗАЦИЯ</h2>
             </div>
@@ -160,7 +164,6 @@ const Login = () => {
                 Войти
               </button>
 
-              {/* ОБНОВЛЕННАЯ РАЗДЕЛЯЮЩАЯ ЛИНИЯ ЦВЕТА #6BAD86 */}
               <div className="position-relative text-center mb-4">
                 <hr style={{ borderColor: '#6BAD86', margin: '0', borderWidth: '1px', opacity: 1 }} />
                 <span 
