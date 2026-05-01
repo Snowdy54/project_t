@@ -1428,6 +1428,7 @@ const CustomNavbar = ({ currentUser }) => { // Добавили пропс curre
           alt="Логотип"
           style={{ width: '51px', height: '55px', objectFit: 'contain' }}
         />
+<<<<<<< Updated upstream
       </div>
 
       {/* ЦЕНТРАЛЬНОЕ МЕНЮ */}
@@ -1468,6 +1469,66 @@ const CustomNavbar = ({ currentUser }) => { // Добавили пропс curre
             Личный кабинет
           </Link>
         )}        
+=======
+      </div>
+
+      {/* ЦЕНТРАЛЬНОЕ МЕНЮ */}
+      <div
+        className="d-flex align-items-center justify-content-between"
+        style={{
+          width: '503px',
+          height: '40px',
+          backgroundColor: '#F4F6E3',
+          borderRadius: '40px',
+          padding: '4px',
+        }}
+      >
+        <Link
+          to="/"
+          className={`text-decoration-none h-100 d-flex align-items-center justify-content-center flex-grow-1 ${location.pathname === '/' ? 'text-white' : ''}`}
+          style={navLinkStyle('/')}
+        >
+          Главная
+        </Link>
+
+        <Link
+          to="/map"
+          className={`text-decoration-none h-100 d-flex align-items-center justify-content-center flex-grow-1 ${location.pathname === '/map' ? 'text-white' : ''}`}
+          style={navLinkStyle('/map')}
+        >
+          Карта пунктов приема
+        </Link>
+
+        <Link
+          to="/articles"
+          className={`text-decoration-none h-100 d-flex align-items-center justify-content-center flex-grow-1 ${location.pathname === '/articles' ? 'text-white' : ''}`}
+          style={navLinkStyle('/articles')}
+        >
+          Статьи и подкасты
+        </Link>
+      </div>
+
+      {/* ПРАВАЯ ЧАСТЬ */}
+      <div
+        className="d-flex justify-content-end align-items-center gap-3"
+        style={{ width: '220px' }}
+      >
+        <Link
+          to="/login"
+          className="text-decoration-none d-flex align-items-center justify-content-center"
+          style={rightButtonStyle('/login', false)}
+        >
+          Войти
+        </Link>
+
+        <Link
+          to="/profile"
+          className="text-decoration-none d-flex align-items-center justify-content-center"
+          style={rightButtonStyle('/profile', true)}
+        >
+          Личный кабинет
+        </Link>
+>>>>>>> Stashed changes
       </div>
     </nav>
   );
@@ -1485,6 +1546,7 @@ const Profile = ({ currentUser, onLogout }) => {
     email: '',
     city: '',
     phone: '',
+<<<<<<< Updated upstream
     about: '',
     avatar: null
   });
@@ -1492,10 +1554,22 @@ const Profile = ({ currentUser, onLogout }) => {
   const fileInputRef = useRef(null);
 
   // 1. Загрузка реальных данных профиля с бэкенда
+=======
+    about: ''
+  });
+
+  // Загрузка реальных данных профиля с бэкенда
+>>>>>>> Stashed changes
   useEffect(() => {
     const fetchProfileData = async () => {
       const token = localStorage.getItem('access_token');
       
+<<<<<<< Updated upstream
+=======
+      // 1. ПРОВЕРКА ТОКЕНА
+      console.log('Текущий токен из localStorage:', token); 
+      
+>>>>>>> Stashed changes
       if (!token) {
         console.warn('Токена нет! Запрос к профилю отменен.');
         return; 
@@ -1504,12 +1578,20 @@ const Profile = ({ currentUser, onLogout }) => {
       try {
         const response = await axios.get('http://127.0.0.1:8000/api/profile/', {
           headers: {
+<<<<<<< Updated upstream
+=======
+            // 2. ИСПРАВЛЕНИЕ: Некоторые бэкенды на Django с SimpleJWT 
+            // требуют префикс 'JWT ' вместо 'Bearer '.
+            // Попробуем отправить с 'Bearer', но если у Андрея стандартные 
+            // настройки Djoser/SimpleJWT, то может потребоваться 'JWT'.
+>>>>>>> Stashed changes
             Authorization: `Bearer ${token}` 
           }
         });
         
         console.log('✅ Данные профиля получены:', response.data);
         
+<<<<<<< Updated upstream
         setFormData( prev => ({
           ...prev,
           firstName: response.data.first_name || '',
@@ -1519,16 +1601,30 @@ const Profile = ({ currentUser, onLogout }) => {
           phone: response.data.phone || '',
           about: response.data.about || '',
           avatar: response.data.avatar || null
+=======
+        setFormData(prev => ({
+          ...prev,
+          firstName: response.data.first_name || '',
+          lastName: response.data.last_name || '',
+          email: response.data.email || ''
+>>>>>>> Stashed changes
         }));
 
       } catch (err) {
         console.error('❌ Ошибка загрузки профиля:', err);
+<<<<<<< Updated upstream
+=======
+        if (err.response) {
+            console.error('Ответ сервера:', err.response.data);
+        }
+>>>>>>> Stashed changes
       }
     };
 
     fetchProfileData();
   }, []);
 
+<<<<<<< Updated upstream
   // 2. Функция загрузки аватарки 
   const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
@@ -1550,6 +1646,8 @@ const Profile = ({ currentUser, onLogout }) => {
     }
   };
 
+=======
+>>>>>>> Stashed changes
   const [isPasswordEditMode, setIsPasswordEditMode] = useState(false);
   const [passwordData, setPasswordData] = useState({
     current: '',
@@ -1602,6 +1700,7 @@ const Profile = ({ currentUser, onLogout }) => {
     setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
   };
 
+<<<<<<< Updated upstream
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     try {
@@ -1647,6 +1746,20 @@ const Profile = ({ currentUser, onLogout }) => {
         alert("Не удалось изменить пароль. Проверьте введенные данные.");
       }
     }
+=======
+  const handleSaveProfile = (e) => {
+    e.preventDefault();
+    setNotification({ show: true, title: 'Готово!', message: 'Изменения сохранены.' });
+    setTimeout(() => setNotification({ show: false, title: '', message: '' }), 3000);
+  };
+
+  const handleSavePassword = (e) => {
+    e.preventDefault();
+    setIsPasswordEditMode(false);
+    setPasswordData({ current: '', new: '', confirm: '' });
+    setNotification({ show: true, title: 'Готово!', message: 'Пароль успешно изменен.' });
+    setTimeout(() => setNotification({ show: false, title: '', message: '' }), 3000);
+>>>>>>> Stashed changes
   };
 
   // Общий стиль для всех карточек (без обводки, с тенью)
@@ -1781,7 +1894,10 @@ const Profile = ({ currentUser, onLogout }) => {
             <div className="d-flex flex-column gap-4" style={{ width: '320px', flexShrink: 0 }}>
               
               {/* ИСПРАВЛЕНИЕ 2: Карточка профиля с тенью */}
+<<<<<<< Updated upstream
               {/* Карточка профиля с тенью */}
+=======
+>>>>>>> Stashed changes
               <div className="p-4 text-center position-relative" style={cardStyle}>
                 <div 
                   className="mx-auto rounded-circle d-flex justify-content-center align-items-center position-relative" 
@@ -1789,12 +1905,17 @@ const Profile = ({ currentUser, onLogout }) => {
                     width: '120px', height: '120px', 
                     background: '#F4F6E3',
                     border: '3px solid transparent',
+<<<<<<< Updated upstream
                     // Убираем градиентную обводку, если аватар уже загружен, чтобы было красивее
                     backgroundImage: formData.avatar ? 'none' : 'linear-gradient(#F4F6E3, #F4F6E3), linear-gradient(180deg, #18442A 0%, #417858 50%, #6BAD86 100%)',
+=======
+                    backgroundImage: 'linear-gradient(#F4F6E3, #F4F6E3), linear-gradient(180deg, #18442A 0%, #417858 50%, #6BAD86 100%)',
+>>>>>>> Stashed changes
                     backgroundOrigin: 'border-box',
                     backgroundClip: 'content-box, border-box'
                   }}
                 >
+<<<<<<< Updated upstream
                   {/* ЕСЛИ ЕСТЬ АВАТАР - ПОКАЗЫВАЕМ ЕГО, ИНАЧЕ - СМАЙЛИК */}
                   {formData.avatar ? (
                     <img 
@@ -1818,6 +1939,11 @@ const Profile = ({ currentUser, onLogout }) => {
                   {/* КНОПКА РЕДАКТИРОВАНИЯ (КАРАНДАШ) */}
                   <div 
                     onClick={() => fileInputRef.current.click()}
+=======
+                  <i className="bi bi-person-fill position-relative" style={{ fontSize: '60px', color: '#6BAD86', top: '4px' }}></i>
+                  
+                  <div 
+>>>>>>> Stashed changes
                     className="position-absolute d-flex justify-content-center align-items-center shadow-sm" 
                     style={{ 
                       width: '32px', height: '32px', 
@@ -1825,17 +1951,25 @@ const Profile = ({ currentUser, onLogout }) => {
                       borderRadius: '50%', 
                       bottom: '-2px', right: '-2px', 
                       cursor: 'pointer',
+<<<<<<< Updated upstream
                       border: '3px solid #FFFFFF',
                       zIndex: 2
+=======
+                      border: '3px solid #FFFFFF'
+>>>>>>> Stashed changes
                     }}
                   >
                     <img src="/icons/pencil_filled.png" alt="edit" style={{ width: '14px', height: '14px' }} />
                   </div>
                 </div>
+<<<<<<< Updated upstream
                 
                 <h5 className="mt-3 mb-3" style={{ color: '#18442A', fontWeight: '700', fontSize: '18px' }}>
                   {formData.firstName || formData.lastName ? `${formData.firstName} ${formData.lastName}`.trim() : 'Имя Фамилия'}
                 </h5>
+=======
+                <h5 className="mt-3 mb-3" style={{ color: '#18442A', fontWeight: '700', fontSize: '18px' }}>Имя Фамилия</h5>
+>>>>>>> Stashed changes
                 
                 {/* ИСПРАВЛЕНИЕ 3: Полоса цвета #F4F6E3 и не прилипает к краям (убран margin: '0 -24px') */}
                 <div style={{ borderTop: '2px solid #F4F6E3', marginTop: '16px', paddingTop: '16px' }}>
@@ -1891,6 +2025,7 @@ const Profile = ({ currentUser, onLogout }) => {
                     <h6 style={{ color: '#18442A', fontWeight: '700', fontSize: '14px', marginBottom: '20px' }}>Личные данные</h6>
                     <div className="mb-3">
                       <label style={{ fontSize: '13px', color: '#18442A', marginBottom: '6px', display: 'block' }}>Имя*</label>
+<<<<<<< Updated upstream
                       {/* ДОБАВЛЕНО value и onChange */}
                       <input type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} placeholder="Введите ваше имя" className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '10px 12px' }} />
                     </div>
@@ -1903,6 +2038,17 @@ const Profile = ({ currentUser, onLogout }) => {
                       <label style={{ fontSize: '13px', color: '#18442A', marginBottom: '6px', display: 'block' }}>Город проживания</label>
                       {/* ДОБАВЛЕНО value и onChange */}
                       <input type="text" name="city" value={formData.city} onChange={handleInputChange} placeholder="Начните вводить..." className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '10px 12px' }} />
+=======
+                      <input type="text" name="firstName" placeholder="Введите ваше имя" className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '10px 12px' }} />
+                    </div>
+                    <div className="mb-3">
+                      <label style={{ fontSize: '13px', color: '#18442A', marginBottom: '6px', display: 'block' }}>Фамилия*</label>
+                      <input type="text" name="lastName" placeholder="Введите вашу фамилию" className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '10px 12px' }} />
+                    </div>
+                    <div className="mb-3">
+                      <label style={{ fontSize: '13px', color: '#18442A', marginBottom: '6px', display: 'block' }}>Город проживания</label>
+                      <input type="text" name="city" placeholder="Начните вводить..." className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '10px 12px' }} />
+>>>>>>> Stashed changes
                     </div>
                   </div>
 
@@ -1912,22 +2058,34 @@ const Profile = ({ currentUser, onLogout }) => {
                       <label style={{ fontSize: '13px', color: '#18442A', marginBottom: '6px', display: 'block' }}>Email*</label>
                       <div className="position-relative">
                         <img src="/icons/mail.png" alt="mail" style={{ width: '16px', position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+<<<<<<< Updated upstream
                         {/* ДОБАВЛЕНО value и onChange. Сделали disabled, так как email обычно меняют по-другому */}
                         <input type="email" name="email" value={formData.email} onChange={handleInputChange} disabled placeholder="Введите ваш email" className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '10px 12px 10px 38px', backgroundColor: '#f9f9f9' }} />
+=======
+                        <input type="email" name="email" placeholder="Введите ваш email" className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '10px 12px 10px 38px' }} />
+>>>>>>> Stashed changes
                       </div>
                     </div>
                     <div className="mb-3">
                       <label style={{ fontSize: '13px', color: '#18442A', marginBottom: '6px', display: 'block' }}>Номер телефона</label>
+<<<<<<< Updated upstream
                       {/* ДОБАВЛЕНО value и onChange */}
                       <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="+ 7 (___) - ___ - __ - __" className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '10px 12px' }} />
+=======
+                      <input type="tel" name="phone" placeholder="+ 7 (___) - ___ - __ - __" className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '10px 12px' }} />
+>>>>>>> Stashed changes
                     </div>
                   </div>
                 </div>
 
                 <div className="mb-5">
                   <label style={{ fontSize: '13px', color: '#18442A', marginBottom: '6px', display: 'block' }}>Обо мне</label>
+<<<<<<< Updated upstream
                   {/* ДОБАВЛЕНО value и onChange в textarea */}
                   <textarea name="about" value={formData.about} onChange={handleInputChange} placeholder="Расскажите о себе" className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '12px', minHeight: '100px', resize: 'none' }}></textarea>
+=======
+                  <textarea name="about" placeholder="Расскажите о себе" className="form-control" style={{ fontSize: '14px', borderRadius: '8px', border: '1px solid #18442A', padding: '12px', minHeight: '100px', resize: 'none' }}></textarea>
+>>>>>>> Stashed changes
                 </div>
 
                 <div className="d-flex align-items-center gap-4">
@@ -2684,6 +2842,7 @@ function App() {
     <Router>
       {/* Передаем данные о юзере в шапку сайта */}
       <CustomNavbar currentUser={currentUser} />
+      <CustomNavbar currentUser={currentUser} onLogout={handleLogout} />
       <Routes>
         <Route path="/" element={<Home />} />
         {/* Передаем currentUser в MapPage, чтобы там проверять, можно ли добавить точку */}
