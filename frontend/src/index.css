@@ -9,7 +9,7 @@
 
 /* Подключаем Actay Bold */
 @font-face {
-  font-family: 'Actay';
+  font-family: 'Actay Wide';
   src: url('/fonts/ActayWide-Bold.otf') format('opentype');
   font-weight: 700;
   font-style: normal;
