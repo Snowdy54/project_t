@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Point, PointWastePrice, WasteType, Review, Notification  # ДОБАВИЛИ Review и Notification
+from .models import Point, PointWastePrice, WasteType, Review, Notification, Article, ArticleCategory
 from django.db.models import Avg
 
 User = get_user_model()
@@ -93,3 +93,30 @@ class ChangePasswordSerializer(serializers.Serializer):
         if not user.check_password(value):
             raise serializers.ValidationError("Старый пароль введен неверно.")
         return value
+    
+
+
+class ArticleCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ArticleCategory
+        fields = ['id', 'name', 'slug']
+
+class ArticleListSerializer(serializers.ModelSerializer):
+    category_name = serializers.ReadOnlyField(source='category.name')
+    author_name = serializers.ReadOnlyField(source='author.username')
+    is_podcast = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Article
+        fields = [
+            'id', 'title', 'summary', 'cover_image', 'category', 'category_name', 
+            'author', 'author_name', 'views_count', 'created_at', 'is_podcast'
+        ]
+
+    def get_is_podcast(self, obj):
+        return bool(obj.audio_file)
+
+class ArticleDetailSerializer(ArticleListSerializer):
+    # Наследуем всё от ListSerializer и добавляем полный контент и аудио
+    class Meta(ArticleListSerializer.Meta):
+        fields = ArticleListSerializer.Meta.fields + ['content', 'audio_file']

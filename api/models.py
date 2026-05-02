@@ -5,6 +5,7 @@ from django.contrib.gis.geos import Point as GEOSPoint
 
 class User(AbstractUser):
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True, verbose_name="Аватар")
+    is_author = models.BooleanField(default=False, verbose_name="Статус автора")
 
     class Meta:
         verbose_name = "Пользователь"
@@ -100,3 +101,46 @@ class Notification(models.Model):
     class Meta:
         verbose_name = "Уведомление"
         verbose_name_plural = "Уведомления"
+
+
+class ArticleCategory(models.Model):
+    name = models.CharField(max_length=100, verbose_name="Название категории")
+    slug = models.SlugField(unique=True, verbose_name="URL-имя (slug)")
+
+    class Meta:
+        verbose_name = "Категория статьи"
+        verbose_name_plural = "Категории статей"
+
+    def __str__(self):
+        return self.name
+
+class Article(models.Model):
+    STATUS_CHOICES = [
+        ('draft', 'Черновик'),
+        ('pending', 'На модерации'), # Добавили этот пункт
+        ('published', 'Опубликовано'),
+        ('archived', 'В архиве'),
+    ]
+
+    title = models.CharField(max_length=255, verbose_name="Заголовок")
+    summary = models.TextField(max_length=500, verbose_name="Краткое описание (для карточки)")
+    content = models.TextField(verbose_name="Текст статьи")
+    cover_image = models.ImageField(upload_to='articles/covers/', null=True, blank=True, verbose_name="Обложка")
+    audio_file = models.FileField(upload_to='podcasts/audio/', null=True, blank=True, verbose_name="Аудиофайл (для подкастов)")
+    
+    category = models.ForeignKey(ArticleCategory, on_delete=models.SET_NULL, null=True, related_name='articles', verbose_name="Категория")
+    author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='articles', verbose_name="Автор")
+    
+    views_count = models.PositiveIntegerField(default=0, verbose_name="Просмотры")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft', verbose_name="Статус")
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
+    published_at = models.DateTimeField(null=True, blank=True, verbose_name="Дата публикации")
+
+    class Meta:
+        verbose_name = "Статья / Подкаст"
+        verbose_name_plural = "Статьи и Подкасты"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.title
