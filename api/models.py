@@ -53,7 +53,8 @@ class Point(models.Model):
     def save(self, *args, **kwargs):
         if not self.latitude or not self.longitude:
             try:
-                geolocator = Yandex(api_key='b3a0ce03-2358-422e-90a5-4ab3331d93c6')
+                # Добавлен timeout=5, чтобы не вешать сервер
+                geolocator = Yandex(api_key='b3a0ce03-2358-422e-90a5-4ab3331d93c6', timeout=5)
                 location_data = geolocator.geocode(self.address)
                 if location_data:
                     self.latitude = location_data.latitude
@@ -64,7 +65,7 @@ class Point(models.Model):
         if self.latitude and self.longitude:
             self.location = GEOSPoint(self.longitude, self.latitude)
         super().save(*args, **kwargs)
-
+    
     def __str__(self):
         return self.name
 

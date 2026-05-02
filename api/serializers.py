@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Point, PointWastePrice, WasteType, Review, Notification, Article, ArticleCategory
 from django.db.models import Avg
+from .models import Point, PointWastePrice, WasteType, Review, Notification, Article, ArticleCategory
 
 User = get_user_model()
 
@@ -24,13 +24,8 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
         fields = ['id', 'user', 'user_name', 'rating', 'text', 'created_at']
 
-# ПЕРЕМЕСТИЛИ ВЫШЕ, чтобы UserProfileSerializer его видел
-class NotificationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Notification
-        fields = ['id', 'title', 'message', 'is_read', 'created_at']
-
 class PointSerializer(serializers.ModelSerializer):
+    # Теперь эти сериализаторы определены выше и ошибки не будет
     prices = PointWastePriceSerializer(many=True, read_only=True)
     reviews = ReviewSerializer(many=True, read_only=True) 
     average_rating = serializers.SerializerMethodField()
@@ -59,13 +54,18 @@ class PointSerializer(serializers.ModelSerializer):
         wastes = obj.prices.filter(is_available=True).values_list('waste_type__name', flat=True).distinct()
         return [{"name": name} for name in wastes]
 
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ['id', 'title', 'message', 'is_read', 'created_at']
+
 class UserProfileSerializer(serializers.ModelSerializer):
     points = PointSerializer(many=True, read_only=True)
     notifications = NotificationSerializer(many=True, read_only=True)
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'avatar', 'points', 'notifications']
+        fields = ['id', 'username', 'email', 'avatar', 'points', 'notifications', 'is_author']
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -75,14 +75,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = ('username', 'password', 'email', 'first_name', 'last_name')
 
     def create(self, validated_data):
-        user = User.objects.create_user(
-            username=validated_data['username'],
-            password=validated_data['password'],
-            email=validated_data.get('email', ''),
-            first_name=validated_data.get('first_name', ''),
-            last_name=validated_data.get('last_name', ''),
-        )
-        return user
+        return User.objects.create_user(**validated_data)
 
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)
@@ -93,8 +86,6 @@ class ChangePasswordSerializer(serializers.Serializer):
         if not user.check_password(value):
             raise serializers.ValidationError("Старый пароль введен неверно.")
         return value
-    
-
 
 class ArticleCategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -117,6 +108,5 @@ class ArticleListSerializer(serializers.ModelSerializer):
         return bool(obj.audio_file)
 
 class ArticleDetailSerializer(ArticleListSerializer):
-    # Наследуем всё от ListSerializer и добавляем полный контент и аудио
     class Meta(ArticleListSerializer.Meta):
         fields = ArticleListSerializer.Meta.fields + ['content', 'audio_file']

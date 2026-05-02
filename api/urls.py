@@ -1,24 +1,22 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import (ChangePasswordView, PointViewSet, PointWastePriceViewSet,
-                     RegisterView, UserProfileView,
-                       ArticleViewSet, ArticleCategoryViewSet)
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
+from .views import (
+    RegisterView, ChangePasswordView, UserProfileViewSet,
+    PointViewSet, PointWastePriceViewSet, ReviewViewSet, 
+    NotificationViewSet, ArticleViewSet, ArticleCategoryViewSet
 )
 
 router = DefaultRouter()
 router.register(r'points', PointViewSet)
-router.register(r'point-prices', PointWastePriceViewSet)
+router.register(r'prices', PointWastePriceViewSet)
+router.register(r'reviews', ReviewViewSet)
+router.register(r'notifications', NotificationViewSet, basename='notification')
 router.register(r'articles', ArticleViewSet, basename='article')
-router.register(r'article-categories', ArticleCategoryViewSet)
+router.register(r'categories', ArticleCategoryViewSet)
+router.register(r'profile', UserProfileViewSet, basename='profile')
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('register/', RegisterView.as_view(), name='register'),
-    path('profile/', UserProfileView.as_view(), name='profile'),
-    path('change-password/', ChangePasswordView.as_view(), name='change_password'),
+    path('change-password/', ChangePasswordView.as_view(), name='change-password'),
 ]
