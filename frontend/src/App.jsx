@@ -7,6 +7,27 @@ import { authService } from './api/services';
 import Login from './Login';
 import Register from './Register'; 
 
+
+const Footer = () => (
+  <footer 
+    className="w-100 d-flex justify-content-between align-items-center" 
+    style={{ 
+      height: '40px', 
+      backgroundColor: '#F4F6E3', 
+      paddingLeft: '80px', 
+      paddingRight: '80px',
+      flexShrink: 0 // Чтобы футер не сжимался
+    }}
+  >
+    <div style={{ color: '#18442a', fontSize: '12px', fontWeight: 700, fontFamily: 'Actay, sans-serif' }}>
+      «ГдеСдать» © 2026
+    </div>
+    <div style={{ color: '#18442a', fontSize: '12px', fontWeight: 700, fontFamily: 'Actay, sans-serif' }}>
+      Support: <a href="mailto:gdesdat@gmail.com" style={{ color: '#18442a', textDecoration: 'none' }}>gdesdat@gmail.com</a>
+    </div>
+  </footer>
+);
+
 const Home = () => {
   // Состояние для открытия/закрытия дополнительного текста "Читать подробнее"
   const [isExpanded, setIsExpanded] = useState(false);
@@ -393,10 +414,9 @@ const AddPointPanel = ({ onClose, wasteCategories = [], reduceCategories = [], a
     setScheduleBlocks(prev => prev.slice(0, -1));
   };
 
-  const handleSubmit = (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
+    
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = true;
     if (!formData.address.trim()) newErrors.address = true;
@@ -408,9 +428,76 @@ const AddPointPanel = ({ onClose, wasteCategories = [], reduceCategories = [], a
       return;
     }
 
-    console.log("Данные отправлены:", { formData, selectedTypes, prices, scheduleBlocks, selectedFiles });
-    setIsSubmitted(true);
-    setTimeout(() => clearCacheAndClose(), 2000); 
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      alert("Необходима авторизация для добавления точки");
+      return;
+    }
+
+    // 1. Формируем расписание из блоков
+    let formattedSchedule = '';
+    if (formData.scheduleType === 'everyday') {
+      formattedSchedule = "Круглосуточно каждый день";
+    } else {
+      formattedSchedule = scheduleBlocks.map(block => {
+        const days = block.days.length > 0 ? block.days.join(', ') : 'Дни не указаны';
+        const time = `${block.openTime || '00:00'} - ${block.closeTime || '23:59'}`;
+        const breakTime = block.hasBreak ? ` (перерыв ${block.breakStart} - ${block.breakEnd})` : '';
+        return `${days}: ${time}${breakTime}`;
+      }).join('\n');
+    }
+
+    // 2. Формируем массив цен
+    // Важно: бэкенд ждет ID типа отхода (waste_type). 
+    // Нам нужно найти этот ID по имени категории из allCategories
+    const formattedPrices = [];
+    Object.keys(prices).forEach(catName => {
+      // Ищем совпадение по имени или описанию, чтобы получить ID (здесь может потребоваться корректировка логики, если у тебя ID не числа)
+      // ВАЖНО: Тебе нужно убедиться, что allCategories имеет правильные ID из БД Django!
+      const catObj = allCategories.find(c => c.name === catName);
+      const catId = catObj ? catObj.id : null; 
+
+      if (catId) {
+        prices[catName].forEach(p => {
+          if (p.price) { // Отправляем только если указана цена
+            formattedPrices.push({
+              waste_type: catId, 
+              item_spec: p.label,
+              price_per_kg: parseFloat(p.price)
+            });
+          }
+        });
+      }
+    });
+
+    // 3. Собираем итоговый объект для отправки
+    const payload = {
+      name: formData.name,
+      address: formData.address,
+      description: formData.description,
+      phone: formData.phone,
+      site: formData.site,
+      useful_links: formData.links, // Отправляем ссылки
+      working_hours: formattedSchedule,
+      prices: formattedPrices
+      // Фотки пока пропускаем, так как для них нужен FormData (multipart/form-data)
+    };
+
+    try {
+      await axios.post(
+        'http://127.0.0.1:8000/api/points/', 
+        payload, 
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      // Показываем плашку успеха
+      setIsSubmitted(true);
+      setTimeout(() => clearCacheAndClose(), 2000); 
+
+    } catch (error) {
+      console.error("Ошибка при отправке точки:", error);
+      alert("Произошла ошибка при отправке. Проверьте консоль.");
+    }
   };
 
   const currentCategories = activeTab === 'waste' ? wasteCategories : reduceCategories;
@@ -654,12 +741,23 @@ const MapPage = () => {
   const mapRef = useRef(null);
   const [isPanelScrolled, setIsPanelScrolled] = useState(false);
   // --- ЛОГИКА ЛАЙКОВ ДЛЯ ПУНКТА ---
-  const [pointLikes, setPointLikes] = useState(122);
+  const [pointLikes, setPointLikes] = useState(0);
   const [pointDislikes, setPointDislikes] = useState(0);
   const [userPointReaction, setUserPointReaction] = useState(null);
 
   const handlePointReaction = async (type) => {
     if (!selectedPointData) return;
+
+    const token = localStorage.getItem('access_token');
+    
+    if (!token) {
+      alert("Войдите в аккаунт, чтобы ставить оценки");
+      return;
+    }
+
+    const oldLikes = pointLikes;
+    const oldDislikes = pointDislikes;
+    const oldReaction = userPointReaction;
     
     // Оптимистичное обновление UI
     if (type === 'like') {
@@ -673,15 +771,97 @@ const MapPage = () => {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      // Отправляем лайк к конкретной ТОЧКЕ
-      await axios.post(
-        `http://127.0.0.1:8000/api/points/${selectedPointData.id}/reaction`,
+      // 3. ИСПРАВЛЕНИЕ: Добавили слеш в конце URL /reaction/
+      const response = await axios.post(
+        `http://127.0.0.1:8000/api/points/${selectedPointData.id}/reaction/`,
         { reaction: type },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      console.log("Реакция сохранена на сервере:", response.data);
+
+      // 4. Синхронизируем данные во всех состояниях
+      const updatedPoints = points.map(p => {
+        if (p.id === selectedPointData.id) {
+          const isRemoving = oldReaction === type;
+          const isSwitching = oldReaction !== null && oldReaction !== type;
+          
+          let newLikes = p.likes || 0;
+          let newDislikes = p.dislikes || 0;
+
+          if (type === 'like') {
+            newLikes = isRemoving ? newLikes - 1 : newLikes + 1;
+            if (isSwitching) newDislikes--;
+          } else {
+            newDislikes = isRemoving ? newDislikes - 1 : newDislikes + 1;
+            if (isSwitching) newLikes--;
+          }
+
+          const updatedPoint = { 
+            ...p, 
+            likes: newLikes, 
+            dislikes: newDislikes, 
+            user_reaction: isRemoving ? null : type 
+          };
+          
+          // Обновляем selectedPointData, чтобы при скролле или кликах данные не прыгали
+          setSelectedPointData(updatedPoint);
+          return updatedPoint;
+        }
+        return p;
+      });
+
+    setPoints(updatedPoints);
+
     } catch (error) {
-      console.error('Ошибка при отправке реакции на пункт:', error);
+      console.error('Ошибка при отправке реакции:', error);
+      // Если сервер вернул ошибку, откатываем UI к старым значениям
+      setPointLikes(oldLikes);
+      setPointDislikes(oldDislikes);
+      setUserPointReaction(oldReaction);
+      alert("Не удалось сохранить оценку. Попробуйте позже.");
+    }
+  };
+
+  const submitComment = async () => {
+    if (!newCommentText.trim()) return; // Защита от пустых сообщений
+
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      alert("Войдите в аккаунт, чтобы оставить комментарий");
+      return;
+    }
+
+    try {
+      // Отправляем текст на наш новый эндпоинт
+      const response = await axios.post(
+        `http://127.0.0.1:8000/api/points/${selectedPointData.id}/add_review/`,
+        { text: newCommentText, rating: 5 }, // Отправляем текст и дефолтную оценку
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const newReview = response.data; // Бэкенд возвращает готовый объект комментария
+
+      // Мгновенно обновляем панель (добавляем коммент в начало списка)
+      const updatedPoint = {
+        ...selectedPointData,
+        reviews: [newReview, ...(selectedPointData.reviews || [])]
+      };
+      
+      setSelectedPointData(updatedPoint);
+      
+      // Обновляем общий список точек, чтобы коммент не пропал при закрытии/открытии панели
+      setPoints(prevPoints => prevPoints.map(p => 
+        p.id === selectedPointData.id ? updatedPoint : p
+      ));
+
+      // Очищаем форму и закрываем её
+      setNewCommentText('');
+      setIsAddingComment(false);
+
+    } catch (error) {
+      console.error('Ошибка при отправке комментария:', error);
+      alert('Не удалось отправить комментарий. Попробуйте позже.');
     }
   };
 
@@ -733,15 +913,26 @@ const MapPage = () => {
   const allCategories = [...wasteCategories, ...reduceCategories];
 
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/api/points/')
-      .then(res => res.json())
-      .then(data => { 
-        // ВРЕМЕННЫЙ ЛОГ ДЛЯ ДЕБАГА
-        console.log("👉 СТРУКТУРА ПУНКТА С БЭКЕНДА:", data[0]); 
-        setPoints(data); 
+    // 1. Пытаемся достать токен
+    const token = localStorage.getItem('access_token');
+    
+    // 2. Настраиваем конфиг для запроса
+    const config = token 
+      ? { headers: { Authorization: `Bearer ${token}` } } 
+      : {};
+
+    // 3. Используем axios вместо обычного fetch для единообразия
+    axios.get('http://127.0.0.1:8000/api/points/', config)
+      .then(res => { 
+        console.log("✅ Данные точек загружены с учетом авторизации:", res.data[0]);
+        setPoints(res.data); 
         setLoading(false); 
       })
-      .catch(err => { setError(err.message); setLoading(false); });
+      .catch(err => { 
+        console.error("❌ Ошибка при загрузке точек:", err);
+        setError(err.message); 
+        setLoading(false); 
+      });
   }, []);
 
   useEffect(() => {
@@ -793,6 +984,33 @@ const MapPage = () => {
     return "ТОЧЕК"; 
   };
 
+  const submitEditSuggestion = async () => {
+    if (!editSuggestion.trim()) return;
+
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      alert("Войдите в аккаунт, чтобы предложить исправление");
+      return;
+    }
+
+    try {
+      await axios.post(
+        `http://127.0.0.1:8000/api/points/${selectedPointData.id}/suggest_edit/`,
+        { text: editSuggestion },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Очищаем форму, закрываем её и показываем уведомление
+      setIsEditingPoint(false);
+      setEditSuggestion('');
+      alert('Спасибо! Ваше исправление отправлено модераторам.');
+
+    } catch (error) {
+      console.error('Ошибка при отправке исправления:', error);
+      alert('Не удалось отправить исправление. Попробуйте позже.');
+    }
+  };
+
   const getFoundWord = (number) => {
     const lastDigit = number % 10;
     const lastTwoDigits = number % 100;
@@ -807,6 +1025,10 @@ const MapPage = () => {
     } else {
       setSelectedPointData(point);
       setIsPanelScrolled(false); // Сбрасываем стиль крестика при новой точке
+
+      setPointLikes(point.likes || 0);
+      setPointDislikes(point.dislikes || 0);
+      setUserPointReaction(point.user_reaction || null);
 
       // Получаем координаты точки
       const lat = point.coordinates?.lat || point.latitude || point.coordinates?.[0];
@@ -1014,7 +1236,6 @@ const MapPage = () => {
 
           {/* ВЫЕЗЖАЮЩАЯ ДЕТАЛЬНАЯ ПАНЕЛЬ ПУНКТА */}
           {selectedPointData && (
-            // Внешняя обёртка без overflow — крестик будет жить здесь
             <div
               className="bg-white shadow"
               style={{
@@ -1023,15 +1244,13 @@ const MapPage = () => {
                 zIndex: 1000,
               }}
             >
-              {/* ПЛАВАЮЩИЙ КРЕСТИК — всегда поверх скролла и фото */}
+              {/* ПЛАВАЮЩИЙ КРЕСТИК */}
               <div
                 style={{
                   position: 'absolute', top: '16px', right: '16px',
-                  zIndex: 1100,
-                  cursor: 'pointer',
+                  zIndex: 1100, cursor: 'pointer',
                   backgroundColor: isPanelScrolled ? 'white' : 'transparent',
-                  borderRadius: '50%',
-                  width: '36px', height: '36px',
+                  borderRadius: '50%', width: '36px', height: '36px',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   boxShadow: isPanelScrolled ? '0 2px 8px rgba(0,0,0,0.18)' : 'none',
                   transition: 'background-color 0.2s ease, box-shadow 0.2s ease',
@@ -1046,7 +1265,7 @@ const MapPage = () => {
                 style={{ overflowY: 'auto', height: '100%', padding: '32px' }}
                 onScroll={(e) => setIsPanelScrolled(e.target.scrollTop > 10)}
               >
-                {/* Заголовок — старый крестик УБИРАЕМ, paddingRight чтобы текст не лез под крестик */}
+                {/* ЗАГОЛОВОК */}
                 <div className="mb-3">
                   <h3
                     className="font-russkin m-0"
@@ -1055,121 +1274,175 @@ const MapPage = () => {
                     {selectedPointData.name}
                   </h3>
                 </div>
-              
-                {/* ВСЁ ОСТАЛЬНОЕ СОДЕРЖИМОЕ ПАНЕЛИ БЕЗ ИЗМЕНЕНИЙ */}
-                {/* (теги категорий, фото, лайки, адрес, режим работы, контакты, описание, цены, комментарии, футер) */}
 
+                {/* ТЕГИ */}
                 <div className="d-flex gap-2 mb-3 flex-wrap">
                   {(selectedPointData.accepted_waste || selectedPointData.materials || selectedPointData.wastes || []).map((w, i) => {
                     const wasteName = typeof w === 'string' ? w : (w?.name || '');
                     if (!wasteName) return null;
                     const catData = allCategories.find(c => c.name === wasteName);
                     return (
-                      <span key={w?.id || i} style={{ backgroundColor: catData ? catData.color : '#f1f4e9', color: '#18442A', fontSize: '12px', padding: '6px 14px', borderRadius: '12px' }}>{wasteName}</span>
+                      <span key={w?.id || i} style={{ backgroundColor: catData ? catData.color : '#f1f4e9', color: '#18442A', fontSize: '12px', padding: '6px 14px', borderRadius: '12px' }}>
+                        {wasteName}
+                      </span>
                     )
                   })}
                 </div>
                 
+                {/* ФОТО */}
                 <div className="w-100 mb-2 rounded" style={{ height: '220px', backgroundColor: '#e9ecef', backgroundImage: 'url(https://via.placeholder.com/480x220?text=Фото+пункта)', backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
 
-              {/* Лайки и дизлайки пункта под фото */}
-              <div className="d-flex gap-3 mt-3 mb-2" style={{ fontSize: '13px', color: '#18442A' }}>
-                <span 
-                  className="d-flex align-items-center" 
-                  onClick={() => handlePointReaction('like')}
-                  style={{ cursor: 'pointer', transition: '0.2s' }}
-                >
-                  <img 
-                    src={userPointReaction === 'like' ? "/icons/like_filled.png" : "/icons/like.png"} 
-                    alt="Like" 
-                    style={{ width: '15px', height: '15px', marginRight: '6px' }} 
-                  /> 
-                  {pointLikes}
-                </span>
-                <span 
-                  className="d-flex align-items-center" 
-                  onClick={() => handlePointReaction('dislike')}
-                  style={{ cursor: 'pointer', transition: '0.2s' }}
-                >
-                  <img 
-                    src={userPointReaction === 'dislike' ? "/icons/dislike_filled.png" : "/icons/dislike.png"} 
-                    alt="Dislike" 
-                    style={{ width: '15px', height: '15px', marginRight: '6px' }} 
-                  /> 
-                  {pointDislikes > 0 ? pointDislikes : 0}
-                </span>
-              </div>
+                {/* ЛАЙКИ И ДИЗЛАЙКИ */}
+                <div className="d-flex gap-3 mt-3 mb-2" style={{ fontSize: '13px', color: '#18442A' }}>
+                  <span 
+                    className="d-flex align-items-center" 
+                    onClick={() => handlePointReaction('like')}
+                    style={{ cursor: 'pointer', transition: '0.2s' }}
+                  >
+                    <img 
+                      src={userPointReaction === 'like' ? "/icons/like_filled.png" : "/icons/like.png"} 
+                      alt="Like" 
+                      style={{ width: '15px', height: '15px', marginRight: '6px' }} 
+                    /> 
+                    {pointLikes}
+                  </span>
+                  <span 
+                    className="d-flex align-items-center" 
+                    onClick={() => handlePointReaction('dislike')}
+                    style={{ cursor: 'pointer', transition: '0.2s' }}
+                  >
+                    <img 
+                      src={userPointReaction === 'dislike' ? "/icons/dislike_filled.png" : "/icons/dislike.png"} 
+                      alt="Dislike" 
+                      style={{ width: '15px', height: '15px', marginRight: '6px' }} 
+                    /> 
+                    {pointDislikes > 0 ? pointDislikes : 0}
+                  </span>
+                </div>
                 
+                {/* АДРЕС И РЕЖИМ РАБОТЫ */}
                 <div className="d-flex flex-column gap-3 mb-4 mt-3">
                   <div>
                     <h6 className="font-russkin" style={{ color: '#18442a', fontSize: '23px', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}><img src="/icons/marker.png" alt="Address" style={{ width: '12px', height: '12px' }} /> АДРЕС</h6>
-                    <p className="mb-0 ms-4 mt-1" style={{ fontSize: '13px', color: '#18442A' }}>{selectedPointData.address || 'ул. Чайковского, 82а'}</p>
+                    <p className="mb-0 ms-4 mt-1" style={{ fontSize: '13px', color: '#18442A' }}>{selectedPointData.address || 'Адрес не указан'}</p>
                   </div>
                   <div>
                     <h6 className="font-russkin" style={{ color: '#18442a', fontSize: '23px', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}><img src="/icons/clock.png" alt="Time" style={{ width: '12px', height: '12px' }} /> РЕЖИМ РАБОТЫ</h6>
-                    <div className="ms-4 mt-1" style={{ fontSize: '13px', color: '#18442A', lineHeight: '1.4' }}>понедельник: 16:00 - 19:00<br/>вторник: 16:00 - 19:00<br/>среда: 16:00 - 19:00<br/>воскресенье: 10:00 - 16:00</div>
+                    <div className="ms-4 mt-1" style={{ fontSize: '13px', color: '#18442A', lineHeight: '1.4', whiteSpace: 'pre-line' }}>
+                      {typeof selectedPointData.working_hours === 'string' 
+                        ? selectedPointData.working_hours 
+                        : (selectedPointData.working_hours && Object.keys(selectedPointData.working_hours).length > 0)
+                          ? Object.entries(selectedPointData.working_hours).map(([day, time]) => `${day}: ${time}`).join('\n')
+                          : 'Режим работы не указан'}
+                    </div>
                   </div>
                   <div className="mt-2 d-flex flex-column gap-2">
-                    <div className="d-flex align-items-center gap-2" style={{ fontSize: '13px', color: '#18442A' }}>
-                      <img src="/icons/planet.png" alt="Website" style={{ width: '10px', height: '10px', marginLeft: '1px' }} /> 
-                      <a href="https://uralvtorma.ru" target="_blank" rel="noopener noreferrer" style={{ color: '#18442A', textDecoration: 'none' }}>uralvtorma.ru</a>
-                    </div>
-                    <div className="d-flex align-items-center gap-2" style={{ fontSize: '13px', color: '#18442A' }}>
-                      <img src="/icons/plane.png" alt="VK" style={{ width: '10px', height: '10px', marginLeft: '1px' }} /> 
-                      <a href="https://vk.com/club206427178" target="_blank" rel="noopener noreferrer" style={{ color: '#18442A', textDecoration: 'none' }}>vk.com/club206427178</a>
-                    </div>
-                    <div className="d-flex align-items-center gap-2" style={{ fontSize: '13px', color: '#18442A' }}>
-                      <img src="/icons/phone.png" alt="Phone" style={{ width: '10px', height: '10px', marginLeft: '1px' }} /> 
-                      <a href="tel:+79043823130" style={{ color: '#18442A', textDecoration: 'none' }}>+7 904 382-31-30</a>
-                    </div>
+                    {/* Контакты: если с бэка придут site или vk, мы их покажем. Пока жестко привязан телефон */}
+                    {selectedPointData.site && (
+                      <div className="d-flex align-items-center gap-2" style={{ fontSize: '13px', color: '#18442A' }}>
+                        <img src="/icons/planet.png" alt="Website" style={{ width: '10px', height: '10px', marginLeft: '1px' }} /> 
+                        <a href={selectedPointData.site.startsWith('http') ? selectedPointData.site : `https://${selectedPointData.site}`} target="_blank" rel="noopener noreferrer" style={{ color: '#18442A', textDecoration: 'none' }}>{selectedPointData.site}</a>
+                      </div>
+                    )}
+                    {selectedPointData.phone && (
+                      <div className="d-flex align-items-center gap-2" style={{ fontSize: '13px', color: '#18442A' }}>
+                        <img src="/icons/phone.png" alt="Phone" style={{ width: '10px', height: '10px', marginLeft: '1px' }} /> 
+                        <a href={`tel:${selectedPointData.phone}`} style={{ color: '#18442A', textDecoration: 'none' }}>{selectedPointData.phone}</a>
+                      </div>
+                    )}
                   </div>
                 </div>
                 
+                {/* ОПИСАНИЕ */}
                 <h6 className="font-russkin" style={{ color: '#18442a', fontSize: '23px', textTransform: 'uppercase', margin: '0 0 8px 0' }}>ОПИСАНИЕ</h6>
-                <p style={{ fontSize: '13px', color: '#18442A', lineHeight: '1.5', marginBottom: '32px' }}>Наша компания принимает макулатуру, пластик и плёнку на самых выгодных условиях. Наша компания осуществляет: - Прием макулатуры в Екатеринбурге - Вывоз макулатуры в Екатеринбурге - Уничтожение макулатуры путем переработки.</p>
+                <p style={{ fontSize: '13px', color: '#18442A', lineHeight: '1.5', marginBottom: '32px', whiteSpace: 'pre-line' }}>
+                  {selectedPointData.description || 'Описание отсутствует.'}
+                </p>
                 
                 <hr style={{ margin: '0 -32px 32px -32px', border: 'none', borderTop: '1px solid #E7EFE8', opacity: 1 }} />
                 
+                {/* ДИНАМИЧЕСКИЕ ЦЕНЫ (С ГРУППИРОВКОЙ ПО КОЛОНКАМ) */}
                 <h6 className="font-russkin" style={{ color: '#18442a', fontSize: '23px', textTransform: 'uppercase', margin: '0 0 12px 0' }}>ЦЕНЫ</h6>
-                <div className="row g-3 mb-4">
-                   <div className="col-6">
-                      <span style={{ backgroundColor: '#CDE5FD', color: '#18442A', fontSize: '12px', padding: '4px 12px', borderRadius: '12px' }}>Пластик</span>
-                      <div className="mt-2" style={{ fontSize: '11px', color: '#18442A', lineHeight: '1.3' }}>Ящик для фруктов б/у - от 3 руб./кг;<br/>ПВД, прозрачная - от 15 руб./кг;<br/>Стрейч, прозрачная - от 17 руб./кг;<br/>Микс (ПВД + стрейч), прозрачная - от 12 руб./кг;</div>
-                      <div className="mt-3"><span style={{ backgroundColor: '#FFC8C8', color: '#18442A', fontSize: '12px', padding: '4px 12px', borderRadius: '12px' }}>Бумага</span></div>
-                      <div className="mt-2" style={{ fontSize: '11px', color: '#18442A', lineHeight: '1.3' }}>МН-7Б (книги, журналы, тетради) - от 7 руб./кг<br/>МН-8В (газеты, газетная бумага) - от 11 руб./кг<br/>МН-5Б (картон) - от 4 руб./кг<br/>МН-6Б (хром-эрзац) - от 4 руб./кг<br/>МН-7Б/1 (архивы) - от 10 руб./кг<br/>МН-13В (смешанная) - от 2 руб./кг</div>
-                   </div>
-                   <div className="col-6">
-                      <span style={{ backgroundColor: '#F8F6B7', color: '#18442A', fontSize: '12px', padding: '4px 12px', borderRadius: '12px' }}>Крышки</span>
-                      <div className="mt-2 mb-3" style={{ fontSize: '11px', color: '#18442A', lineHeight: '1.3' }}>HDPE, PE-HD, PE - 20 руб./кг</div>
-                      <div className="mt-3"><span style={{ backgroundColor: '#C4C2FF', color: '#18442A', fontSize: '12px', padding: '4px 12px', borderRadius: '12px' }}>Металл</span></div>
-                      <div className="mt-2" style={{ fontSize: '11px', color: '#18442A', lineHeight: '1.3' }}>Чугун - 17 руб./кг<br/>Оцинковка - 17 руб./кг<br/>Дюраль - 100 руб./кг<br/>Сталь 5А - 17 руб./кг</div>
-                   </div>
-                </div>
+                {(() => {
+                  const prices = selectedPointData.prices || [];
+                  if (prices.length === 0) return <p style={{ fontSize: '13px', color: '#A0A0A0' }}>Цены не указаны</p>;
+
+                  // 1. ИСПРАВЛЕНИЕ: Группируем цены по новой переменной waste_category (Пластик, Бумага)
+                  const groupedPrices = {};
+                  prices.forEach(p => {
+                    const catName = p.waste_category || 'Другое';
+                    if (!groupedPrices[catName]) groupedPrices[catName] = [];
+                    groupedPrices[catName].push(p);
+                  });
+
+                  // Разбиваем на 2 колонки
+                  const categoryNames = Object.keys(groupedPrices);
+                  const half = Math.ceil(categoryNames.length / 2);
+                  const leftCategories = categoryNames.slice(0, half);
+                  const rightCategories = categoryNames.slice(half);
+
+                  const renderCategory = (catName) => {
+                    const catColor = allCategories.find(c => c.name === catName)?.color || '#F4F6E3';
+                    return (
+                      <React.Fragment key={catName}>
+                        <div className="mt-3"><span style={{ backgroundColor: catColor, color: '#18442A', fontSize: '12px', padding: '4px 12px', borderRadius: '12px' }}>{catName}</span></div>
+                        <div className="mt-2" style={{ fontSize: '11px', color: '#18442A', lineHeight: '1.3' }}>
+                          {groupedPrices[catName].map((p, idx) => (
+                            <div key={idx} style={{ marginBottom: '4px' }}>
+                              {/* 2. ИСПРАВЛЕНИЕ: Выводим конкретное название сырья (waste_type_name) и уточнение */}
+                              {p.waste_type_name} {p.item_spec ? `(${p.item_spec})` : ''} - от {p.price_per_kg} руб./{p.unit || 'кг'}
+                            </div>
+                          ))}
+                        </div>
+                      </React.Fragment>
+                    );
+                  };
+
+                  return (
+                    <div className="row g-3 mb-4">
+                       <div className="col-6">
+                         {leftCategories.map((cat, i) => (
+                           <div key={cat} style={{ marginTop: i === 0 ? '-16px' : '0' }}>{renderCategory(cat)}</div>
+                         ))}
+                       </div>
+                       <div className="col-6">
+                         {rightCategories.map((cat, i) => (
+                           <div key={cat} style={{ marginTop: i === 0 ? '-16px' : '0' }}>{renderCategory(cat)}</div>
+                         ))}
+                       </div>
+                    </div>
+                  );
+                })()}
                 
                 <hr style={{ margin: '32px -32px 32px -32px', border: 'none', borderTop: '1px solid #E7EFE8', opacity: 1 }} />
                 
+                {/* ДИНАМИЧЕСКИЕ КОММЕНТАРИИ */}
                 <h6 className="font-russkin" style={{ color: '#18442a', fontSize: '23px', textTransform: 'uppercase', margin: '0 0 24px 0' }}>КОММЕНТАРИИ</h6>
                 
                 <div className="d-flex flex-column gap-4 mb-3">
-                  {[
-                    { id: 1, authorName: 'Брэд Питт', date: '11 апреля 2026', text: 'Правило номер один: не говорить о приёме вторсырья. Правило номер два: НИКОГДА НЕ ГОВОРИТЬ О ПРИЕМЕ ВТОРСЫРЬЯ.', likesCount: 122, dislikesCount: 0 },
-                    { id: 2, authorName: 'Дональд Трамп', date: '1 февраля 2026', text: 'Make вторсырье great again!', likesCount: 0, dislikesCount: 0 },
-                    { id: 3, authorName: 'Eminem', date: '13 ноября 2025', text: 'Заплатили копейки, но хоть не потерял себя. Мама, я сдал мусор.', likesCount: 0, dislikesCount: 0 },
-                    { id: 4, authorName: 'Тайлер Дерден', date: '10 мая 2025', text: 'Лишь утратив всё до конца, мы обретаем свободу сортировать мусор.', likesCount: 50, dislikesCount: 2 }
-                  ]
-                  .slice(0, showAllComments ? undefined : 3)
-                  .map(comment => (
-                    <CommentItem key={comment.id} comment={comment} />
-                  ))}
+                  {selectedPointData.reviews && selectedPointData.reviews.length > 0 ? (
+                    selectedPointData.reviews.slice(0, showAllComments ? undefined : 3).map(review => (
+                      <CommentItem 
+                        key={review.id} 
+                        comment={{
+                          authorName: review.author_name || review.user || 'Аноним',
+                          date: new Date(review.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }),
+                          text: review.text
+                        }} 
+                      />
+                    ))
+                  ) : (
+                    <p style={{ fontSize: '13px', color: '#A0A0A0' }}>Отзывов пока нет. Будьте первым!</p>
+                  )}
                 </div>
                 
-                {!showAllComments && (
+                {!showAllComments && selectedPointData.reviews && selectedPointData.reviews.length > 3 && (
                   <div className="text-center mb-4 mt-4">
                     <span 
                       style={{ fontSize: '12px', color: '#6BAD86', cursor: 'pointer', fontWeight: '500' }}
                       onClick={() => setShowAllComments(true)}
                     >
-                      Показать все комментарии (4)
+                      Показать все комментарии ({selectedPointData.reviews.length})
                     </span>
                   </div>
                 )}
@@ -1188,11 +1461,7 @@ const MapPage = () => {
                       <button 
                         className="btn flex-grow-1 rounded-pill shadow-sm" 
                         style={{ backgroundColor: '#18442a', color: 'white', fontSize: '13px' }}
-                        onClick={() => {
-                          console.log("Отправка:", newCommentText);
-                          setIsAddingComment(false);
-                          setNewCommentText('');
-                        }}
+                        onClick={submitComment}
                       >
                         Отправить
                       </button>
@@ -1216,7 +1485,8 @@ const MapPage = () => {
                 )}
 
                 <hr style={{ margin: '32px -32px 0 -32px', border: 'none', borderTop: '1px solid #E7EFE8', opacity: 1 }} />
-              
+                
+                {/* ПОДВАЛ ПАНЕЛИ */}
                 {isEditingPoint ? (
                   <div className="pt-4 pb-2">
                     <textarea 
@@ -1235,28 +1505,30 @@ const MapPage = () => {
                       <button 
                         className="btn rounded-pill px-4 py-1"
                         style={{ fontSize: '12px', backgroundColor: '#6BAD86', color: 'white', fontWeight: '600' }}
-                        onClick={() => {
-                          console.log("Исправление отправлено:", editSuggestion);
-                          setIsEditingPoint(false);
-                          setEditSuggestion('');
-                        }}
+                        onClick={submitEditSuggestion}
                       >Отправить</button>
                     </div>
                   </div>
                 ) : (
                   <div className="d-flex justify-content-between align-items-center pt-4 pb-2">
                     <div className="d-flex flex-column gap-2" style={{ fontSize: '12px', color: '#18442A' }}>
-                      <img src="/icons/person.png" alt="Moderator" style={{ width: '12px', height: '12px' }} />
-                      <span style={{ color: '#666' }}>Модератор точки:</span> 
-                      <a href="mailto:kolyakorobov@gmail.com" style={{ color: '#18442A', textDecoration: 'none', fontWeight: 500 }}>kolyakorobov@gmail.com</a>
+                      <div className="d-flex align-items-center gap-2">
+                         <img src="/icons/person.png" alt="Moderator" style={{ width: '12px', height: '12px' }} />
+                         <span style={{ color: '#666' }}>Модератор точки:</span> 
+                      </div>
+                      <a href={`mailto:${selectedPointData.owner_email || 'support@gdesdat.ru'}`} style={{ color: '#18442A', textDecoration: 'none', fontWeight: 500, paddingLeft: '20px' }}>
+                         {selectedPointData.owner_email || 'support@gdesdat.ru'}
+                      </a>
                     </div>
                     <div 
                       className="d-flex flex-column gap-2" 
                       style={{ fontSize: '12px', color: '#6BAD86', cursor: 'pointer', fontWeight: '500' }}
                       onClick={() => setIsEditingPoint(true)}
                     >
-                      <span>Предложить исправление</span>
-                      <img src="/icons/pencil.png" alt="Edit" style={{ width: '12px', height: '12px' }} />
+                      <div className="d-flex align-items-center gap-2">
+                        <span>Предложить исправление</span>
+                        <img src="/icons/pencil.png" alt="Edit" style={{ width: '12px', height: '12px' }} />
+                      </div>
                     </div>
                   </div>
                 )}
@@ -2429,7 +2701,8 @@ const Profile = ({ currentUser, onLogout }) => {
     city: '',
     phone: '',
     about: '',
-    avatar: null
+    avatar: null,
+    pointsCount: 0
   });
 
   const fileInputRef = useRef(null);
@@ -2464,7 +2737,8 @@ const Profile = ({ currentUser, onLogout }) => {
           city: response.data.city || '',
           phone: response.data.phone || '',
           about: response.data.about || '',
-          avatar: response.data.avatar || null
+          avatar: response.data.avatar || null,
+          pointsCount: response.data.points ? response.data.points.length : 0
         }));
 
       } catch (err) {
@@ -2665,6 +2939,7 @@ const Profile = ({ currentUser, onLogout }) => {
   const [notificationToDelete, setNotificationToDelete] = useState(null);
 
   const [showPublishModal, setShowPublishModal] = useState(false);
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
 
   const markAllAsRead = () => {
     setMockNotifications(prev => prev.map(notif => ({ ...notif, isNew: false })));
@@ -2672,6 +2947,17 @@ const Profile = ({ currentUser, onLogout }) => {
 
   const toggleNotification = (id) => {
     setExpandedNotifId(expandedNotifId === id ? null : id);
+  };
+
+  const confirmDeleteAccount = async () => {
+    try {
+      await authService.deleteAccount();
+      setShowDeleteAccountModal(false);
+      onLogout(); // Вызываем твою готовую функцию (очистит токены и кинет на главную)
+    } catch (error) {
+      console.error("Ошибка при удалении аккаунта:", error);
+      alert("Не удалось удалить аккаунт.");
+    }
   };
 
   return (
@@ -2785,10 +3071,17 @@ const Profile = ({ currentUser, onLogout }) => {
                   {formData.firstName || formData.lastName ? `${formData.firstName} ${formData.lastName}`.trim() : 'Имя Фамилия'}
                 </h5>
                 
-                {/* ИСПРАВЛЕНИЕ 3: Полоса цвета #F4F6E3 и не прилипает к краям (убран margin: '0 -24px') */}
                 <div style={{ borderTop: '2px solid #F4F6E3', marginTop: '16px', paddingTop: '16px' }}>
-                  <h4 style={{ color: '#18442A', margin: 0, fontWeight: '700' }}>6</h4>
-                  <span style={{ fontSize: '13px', color: '#18442A' }}>модерируемых пунктов</span>
+                  <h4 style={{ color: '#18442A', margin: 0, fontWeight: '700' }}>
+                    {formData.pointsCount}
+                  </h4>
+                  <span style={{ fontSize: '13px', color: '#18442A' }}>
+                    {formData.pointsCount % 10 === 1 && formData.pointsCount % 100 !== 11 
+                      ? 'модерируемый пункт' 
+                      : [2, 3, 4].includes(formData.pointsCount % 10) && ![12, 13, 14].includes(formData.pointsCount % 100) 
+                        ? 'модерируемых пункта' 
+                        : 'модерируемых пунктов'}
+                  </span>
                 </div>
               </div>
 
@@ -2875,7 +3168,13 @@ const Profile = ({ currentUser, onLogout }) => {
                 <div className="d-flex align-items-center gap-4">
                   <button onClick={handleSaveProfile} className="btn px-5 py-2" style={{ backgroundColor: '#18442A', color: '#FFFFFF', fontSize: '14px', fontWeight: '500', borderRadius: '8px' }}>Сохранить изменения</button>
                   <span onClick={onLogout} style={{ fontSize: '14px', color: '#18442A', cursor: 'pointer', fontWeight: '500' }}>Выйти</span>
-                  <span className="ms-auto" style={{ fontSize: '13px', color: '#FF8A8A', cursor: 'pointer' }}>Удалить аккаунт</span>
+                  <span 
+                    className="ms-auto" 
+                    style={{ fontSize: '13px', color: '#FF8A8A', cursor: 'pointer' }}
+                    onClick={() => setShowDeleteAccountModal(true)}
+                  >
+                    Удалить аккаунт
+                  </span>
                 </div>
               </div>
 
@@ -2890,6 +3189,73 @@ const Profile = ({ currentUser, onLogout }) => {
             </div>
           </div>
         )}
+        
+      {showDeleteAccountModal && (
+              <div 
+                className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+                style={{ 
+                  backgroundColor: 'rgba(255, 255, 255, 0.4)', 
+                  backdropFilter: 'blur(8px)',                  
+                  WebkitBackdropFilter: 'blur(8px)',            
+                  zIndex: 10000                                 
+                }}
+              >
+                <div 
+                  className="bg-white d-flex flex-column align-items-center text-center" 
+                  style={{ 
+                    width: '640px', 
+                    padding: '48px 40px',
+                    borderRadius: '24px', 
+                    boxShadow: '0px 16px 60px rgba(0, 0, 0, 0.12)', 
+                    border: 'none' 
+                  }}
+                >
+                  {/* Иконка предупреждения */}
+                  <div style={{ width: '72px', height: '72px', backgroundColor: '#FFE5E5', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '24px' }}>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="12" cy="12" r="11" stroke="#FF8A8A" strokeWidth="2"/>
+                      <path d="M12 6V14" stroke="#FF8A8A" strokeWidth="2.5" strokeLinecap="round"/>
+                      <circle cx="12" cy="17.5" r="1.5" fill="#FF8A8A"/>
+                    </svg>
+                  </div>
+
+                  <h2 style={{ margin: '0 0 16px 0', fontSize: '28px', fontWeight: '700', color: '#18442A', fontFamily: '"Actay", sans-serif' }}>
+                    Удалить аккаунт?
+                  </h2>
+
+                  <p style={{ margin: '0 0 40px 0', fontSize: '18px', color: '#18442A', lineHeight: '1.5', whiteSpace: 'nowrap' }}>
+                    Вы уверены, что хотите навсегда удалить свой аккаунт?<br/>
+                    Все ваши данные и модерируемые точки будут потеряны.
+                  </p>
+
+                  <div className="d-flex justify-content-between w-100 align-items-center px-2">
+                    <span 
+                      onClick={() => setShowDeleteAccountModal(false)}
+                      style={{ fontSize: '18px', color: '#18442A', cursor: 'pointer', fontWeight: '400' }}
+                    >
+                      Отмена
+                    </span>
+                    
+                    <button 
+                      className="btn"
+                      onClick={confirmDeleteAccount}
+                      style={{
+                        backgroundColor: '#FF8A8A',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '12px',
+                        padding: '12px 32px',
+                        fontSize: '18px',
+                        fontWeight: '400',
+                        fontFamily: 'inherit'
+                      }}
+                    >
+                      Удалить навсегда
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
         {/* СПИСОК МОДЕРИРУЕМЫХ ТОЧЕК */}
         {activeTab === 'points' && (
@@ -3593,6 +3959,7 @@ const Profile = ({ currentUser, onLogout }) => {
       )}
 
       </div>
+      <Footer />
     </div>
   );
 };
@@ -3612,6 +3979,7 @@ const EditPoint = () => {
           </Link>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
