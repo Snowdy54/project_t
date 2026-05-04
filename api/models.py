@@ -9,6 +9,7 @@ class User(AbstractUser):
     email = models.CharField(max_length=30, blank=True, null=True, verbose_name="Почта")
     phone = models.CharField(max_length=20, blank=True, null=True, verbose_name="Телефон")
     about = models.TextField(blank=True, null=True, verbose_name="О себе")
+    is_author = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "Пользователь"
@@ -18,14 +19,16 @@ class User(AbstractUser):
         return self.username
 
 class WasteType(models.Model):
-    name = models.CharField(max_length=100, verbose_name="Название (например, ПЭТ 01)")
-    description = models.TextField(verbose_name="Инструкция по подготовке", blank=True)
+    name = models.CharField(max_length=100, verbose_name="Название (например, Ящик для фруктов (б/у))")
+    description = models.TextField(verbose_name="Тип отходов/сырья", blank=True)
 
     class Meta:
-        verbose_name = "Тип отхода"
-        verbose_name_plural = "Типы отходов"
+        verbose_name = "Наименование отхода"
+        verbose_name_plural = "Отходы/Сырье"
 
     def __str__(self):
+        if self.description:
+            return f"{self.name} ({self.description})"
         return self.name
 
 class Point(models.Model):
@@ -37,6 +40,8 @@ class Point(models.Model):
     description = models.TextField(verbose_name="Описание", blank=True, null=True)
     phone = models.CharField(max_length=20, verbose_name="Телефон", blank=True, null=True)
     working_hours = models.JSONField(verbose_name="Режим работы", blank=True, null=True, default=dict)
+    site = models.CharField(max_length=255, verbose_name="Сайт", blank=True, null=True)
+    useful_links = models.TextField(verbose_name="Полезные ссылки", blank=True, null=True)
 
     status = models.CharField(
         max_length=10, 
@@ -104,3 +109,33 @@ class Notification(models.Model):
     class Meta:
         verbose_name = "Уведомление"
         verbose_name_plural = "Уведомления"
+        
+class PointReaction(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Пользователь")
+    point = models.ForeignKey(Point, on_delete=models.CASCADE, related_name='reactions', verbose_name="Точка")
+    is_like = models.BooleanField(verbose_name="Это лайк?") # True = лайк, False = дизлайк
+
+    class Meta:
+        verbose_name = "Реакция на пункт"
+        verbose_name_plural = "Реакции на пункты"
+        # Защита: один пользователь может оставить только одну реакцию на один пункт
+        unique_together = ('user', 'point') 
+
+    def __str__(self):
+        reaction = "Лайк" if self.is_like else "Дизлайк"
+        return f"{self.user.username} -> {self.point.name} ({reaction})"
+    
+class PointEditSuggestion(models.Model):
+    point = models.ForeignKey(Point, on_delete=models.CASCADE, related_name='edit_suggestions', verbose_name="Точка")
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Пользователь")
+    text = models.TextField(verbose_name="Текст исправления")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата отправки")
+    is_resolved = models.BooleanField(default=False, verbose_name="Рассмотрено")
+
+    class Meta:
+        verbose_name = "Исправления"
+        verbose_name_plural = "Исправления"
+
+    def __str__(self):
+        username = self.user.username if self.user else "Аноним"
+        return f"Исправление для '{self.point.name}' от {username}"

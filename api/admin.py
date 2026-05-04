@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import PointWastePrice, User, WasteType, Point, Review, Notification
+from .models import PointWastePrice, User, WasteType, Point, Review, Notification, PointEditSuggestion
 
 class PointWastePriceInline(admin.TabularInline):
     model = PointWastePrice
@@ -20,7 +20,7 @@ class PointAdmin(admin.ModelAdmin):
             'fields': ('name', 'address', 'status', 'owner')
         }),
         (" Контакты и описание", {
-            'fields': ('description', 'phone', 'working_hours'),
+            'fields': ('description', 'phone','site', 'useful_links', 'working_hours'),
         }),
         (" Геоданные", {
             'fields': ('latitude', 'longitude'),
@@ -50,7 +50,10 @@ class NotificationAdmin(admin.ModelAdmin):
 
 
 # Регистрируем WasteType
-admin.site.register(WasteType)
+@admin.register(WasteType)
+class WasteTypeAdmin(admin.ModelAdmin):
+    list_display = ('name', 'description')
+    search_fields = ('name', 'description')
 
 @admin.register(PointWastePrice)
 class PointWastePriceAdmin(admin.ModelAdmin):
@@ -75,3 +78,14 @@ class CustomUserAdmin(UserAdmin):
     fieldsets = UserAdmin.fieldsets + (
         ('Дополнительная информация (Профиль)', {'fields': ('city', 'phone', 'about', 'avatar')}),
     )
+    
+from .models import PointWastePrice, User, WasteType, Point, Review, Notification, PointEditSuggestion
+
+# 2. Добавь этот класс куда-нибудь вниз:
+@admin.register(PointEditSuggestion)
+class PointEditSuggestionAdmin(admin.ModelAdmin):
+    list_display = ('point', 'user', 'created_at', 'is_resolved')
+    list_filter = ('is_resolved', 'created_at')
+    search_fields = ('text', 'point__name', 'user__username')
+    # Делаем так, чтобы в админке текст можно было только читать (по желанию)
+    readonly_fields = ('point', 'user', 'text', 'created_at')

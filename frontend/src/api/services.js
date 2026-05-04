@@ -42,6 +42,11 @@ export const authService = {
   changePassword: async (passwordData) => {
     const response = await api.post('change-password/', passwordData);
     return response.data;
+  },
+
+  deleteAccount: async () => {
+    const response = await api.delete('delete-account/');
+    return response.data;
   }
 };
 
