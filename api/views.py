@@ -22,34 +22,22 @@ from .permissions import IsPointOwner
 
 # --- ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ ---
 
-class UserProfileViewSet(viewsets.ModelViewSet):
-    """
-    Вьюсет для работы с профилем. 
-    Позволяет получать данные через /profile/me/ и обновлять их.
-    """
+# --- ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ ---
+
+class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = UserProfileSerializer
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
-    def get_queryset(self):
-        return User.objects.filter(id=self.request.user.id)
+    def get(self, request):
+        serializer = UserProfileSerializer(request.user)
+        return Response(serializer.data)
 
-    def get_object(self):
-        if self.kwargs.get('pk') == 'me':
-            return self.request.user
-        return super().get_object()
-
-    @action(detail=False, methods=['get', 'patch'])
-    def me(self, request):
-        user = request.user
-        if request.method == 'GET':
-            serializer = self.get_serializer(user)
-            return Response(serializer.data)
-        
-        serializer = self.get_serializer(user, data=request.data, partial=True)
+    def patch(self, request):
+        serializer = UserProfileSerializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
+        print("ОШИБКА СОХРАНЕНИЯ ПРОФИЛЯ:", serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # --- ТОЧКИ ПРИЕМА ---
