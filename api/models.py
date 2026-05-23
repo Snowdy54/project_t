@@ -129,6 +129,7 @@ class Article(models.Model):
     audio_file = models.FileField(upload_to='podcasts/audio/', null=True, blank=True, verbose_name="Аудиофайл")
     category = models.ForeignKey(ArticleCategory, on_delete=models.SET_NULL, null=True, related_name='articles', verbose_name="Категория")
     author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='articles', verbose_name="Автор")
+    waste_types = models.ManyToManyField(WasteType, blank=True, related_name='articles', verbose_name="Теги сырья")
     views_count = models.PositiveIntegerField(default=0, verbose_name="Просмотры")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft', verbose_name="Статус")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")

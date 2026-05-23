@@ -42,6 +42,8 @@ class UserProfileView(APIView):
 
 # --- ТОЧКИ ПРИЕМА ---
 
+# --- ТОЧКИ ПРИЕМА ---
+
 class PointViewSet(viewsets.ModelViewSet):
     serializer_class = PointSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
@@ -49,10 +51,31 @@ class PointViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'address']
 
     def get_queryset(self):
+        queryset = Point.objects.all()
+        
         if self.action == 'list':
-            return Point.objects.filter(status='approved')
-        return Point.objects.all()
-    
+            queryset = queryset.filter(status='approved')
+
+        # 1. ФИЛЬТР ПО ЦЕНЕ
+        price_type = self.request.query_params.get('price_type')
+        if price_type == 'free':
+            queryset = queryset.filter(Q(prices__price_per_kg=0) | Q(prices__isnull=True)).distinct()
+        elif price_type == 'paid':
+            queryset = queryset.filter(prices__price_per_kg__gt=0).distinct()
+
+        # 2. ФИЛЬТР ПО ВРЕМЕНИ РАБОТЫ
+        time_type = self.request.query_params.get('time_type')
+        if time_type == '24/7':
+            # Поиск по строке "Круглосуточно" в JSON/Text поле
+            queryset = queryset.filter(working_hours__icontains='Круглосуточно')
+        elif time_type == 'open_now':
+            # Примечание: полноценная логика "Сейчас открыто" требует сложных временных вычислений на сервере.
+            # Для текущей архитектуры (текстовое расписание) фронтенд сам может фильтровать этот параметр, 
+            # или мы возвращаем все одобренные точки, позволяя UI-логике скрыть закрытые.
+            pass
+
+        return queryset
+
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
@@ -120,16 +143,24 @@ class PointWastePriceViewSet(viewsets.ModelViewSet):
             raise exceptions.PermissionDenied("Вы не владелец этой точки.")
         serializer.save()
 
-# --- СТАТЬИ И КАТЕГОРИИ ---
-
 class ArticleViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['category', 'status']
+    # Добавили waste_types в фильтры! Теперь фронт может делать: /api/articles/?waste_types=1
+    filterset_fields = ['category', 'status', 'waste_types'] 
     search_fields = ['title', 'summary']
+    ordering_fields = ['views_count', 'published_at'] # Разрешаем сортировку по этим полям
 
     def get_queryset(self):
         user = self.request.user
+        
+        # Находим статьи, опубликованные более 14 дней назад, и отправляем в архив
+        two_weeks_ago = timezone.now() - timezone.timedelta(days=14)
+        Article.objects.filter(
+            status='published', 
+            published_at__lt=two_weeks_ago
+        ).update(status='archived')
+
         if user.is_authenticated and user.is_staff:
             return Article.objects.all()
         if user.is_anonymous:
@@ -138,6 +169,14 @@ class ArticleViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         return ArticleListSerializer if self.action == 'list' else ArticleDetailSerializer
+
+    def perform_create(self, serializer):
+        # Если статью создает админ - сразу публикуем
+        if self.request.user.is_staff:
+            serializer.save(author=self.request.user, status='published', published_at=timezone.now())
+        # Если обычный автор - отправляем на модерацию
+        else:
+            serializer.save(author=self.request.user, status='pending')
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()

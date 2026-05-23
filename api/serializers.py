@@ -134,23 +134,26 @@ class ArticleCategorySerializer(serializers.ModelSerializer):
 class ArticleListSerializer(serializers.ModelSerializer):
     category_name = serializers.ReadOnlyField(source='category.name')
     author_name = serializers.ReadOnlyField(source='author.username')
+    # Добавляем список ID типов сырья, чтобы фронт мог по ним фильтровать
+    waste_types = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
         model = Article
         fields = [
             'id', 'title', 'summary', 'cover_image', 
             'category', 'category_name', 'author_name', 
-            'views_count', 'created_at'
+            'views_count', 'published_at', 'waste_types' # Заменили created_at на published_at
         ]
 
 class ArticleDetailSerializer(serializers.ModelSerializer):
     category_name = serializers.ReadOnlyField(source='category.name')
     author_name = serializers.ReadOnlyField(source='author.username')
+    waste_types = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
         model = Article
         fields = [
             'id', 'title', 'summary', 'content', 'cover_image', 
             'audio_file', 'category', 'category_name', 'author', 
-            'author_name', 'views_count', 'status', 'created_at', 'published_at'
+            'author_name', 'views_count', 'status', 'published_at', 'waste_types'
         ]
