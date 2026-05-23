@@ -1,122 +1,35 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import User, WasteType, Point, PointWastePrice, Review, Notification
+from django.db.models import Avg
+from .models import (
+    Point, PointWastePrice, WasteType, Review, 
+    Notification, Article, ArticleCategory, PointReaction
+)
 
 User = get_user_model()
 
-class WasteTypeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = WasteType
-        fields = ['id', 'name', 'description']
-
-class PointWastePriceSerializer(serializers.ModelSerializer):
-    waste_type_name = serializers.ReadOnlyField(source='waste_type.name')
-    waste_category = serializers.ReadOnlyField(source='waste_type.description')
-
-    class Meta:
-        model = PointWastePrice
-        fields = ['id', 'waste_type', 'waste_type_name', 'waste_category', 'price_per_kg', 'unit', 'is_available']
-
-class ReviewSerializer(serializers.ModelSerializer):
-    author_name = serializers.ReadOnlyField(source='user.username') # Чтобы видеть имя автора
-    class Meta:
-        model = Review
-        fields = ['id', 'author_name', 'rating', 'text', 'created_at']
-
-class PointSerializer(serializers.ModelSerializer):
-    prices = PointWastePriceSerializer(many=True, required=False)
-    reviews = ReviewSerializer(many=True, read_only=True) # ДОБАВИТЬ ЭТУ СТРОКУ
-    coords = serializers.SerializerMethodField()
-    accepted_waste = serializers.SerializerMethodField()
-    owner_email = serializers.ReadOnlyField(source='owner.email') # Для почты модератора
-    
-    likes = serializers.SerializerMethodField()
-    dislikes = serializers.SerializerMethodField()
-    user_reaction = serializers.SerializerMethodField()
-    useful_links = serializers.CharField(write_only=True, required=False, allow_blank=True)
-
-    class Meta:
-        model = Point
-        fields = [
-            'id', 'name', 'address', 'latitude', 'longitude', 
-            'location', 'coords', 'status', 'inn', 'legal_entity', 
-            'prices', 'accepted_waste', 'working_hours', 'phone', 
-            'description', 'reviews', 'owner_email',
-            'likes', 'dislikes', 'user_reaction',
-            'site', 'useful_links'
-        ]
-        
-        read_only_fields = ['status']
-        
-    def create(self, validated_data):
-        # 1. Вытаскиваем цены из данных, если они есть
-        prices_data = validated_data.pop('prices', [])
-        
-        # 2. Создаем саму точку (статус 'pending' применится по умолчанию из модели)
-        # owner назначается во viewset
-        point = Point.objects.create(**validated_data)
-        
-        # 3. Создаем связанные цены
-        for price_data in prices_data:
-            # waste_type - это объект WasteType, поэтому берем его ID
-            waste_type = price_data.pop('waste_type')
-            PointWastePrice.objects.create(point=point, waste_type=waste_type, **price_data)
-            
-        return point
-
-    def get_coords(self, obj):
-        if obj.location:
-            return {"lng": obj.location.x, "lat": obj.location.y}
-        return None
-
-    def get_accepted_waste(self, obj):
-        wastes = obj.prices.filter(is_available=True).values_list('waste_type__description', flat=True).distinct()
-        return [{"name": name} for name in wastes if name]
-    
-    def get_likes(self, obj):
-        return obj.reactions.filter(is_like=True).count()
-
-    def get_dislikes(self, obj):
-        return obj.reactions.filter(is_like=False).count()
-
-    def get_user_reaction(self, obj):
-        request = self.context.get('request')
-        if request and request.user and request.user.is_authenticated:
-            reaction = obj.reactions.filter(user=request.user).first()
-            if reaction:
-                return 'like' if reaction.is_like else 'dislike'
-        return None
-    
-
-class UserProfileSerializer(serializers.ModelSerializer):
-    points = PointSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'city', 'phone', 'about', 'points', 'avatar']
-        read_only_fields = ['username', 'email']
-
+# --- СИСТЕМНЫЕ СЕРИАЛИЗАТОРЫ (АККАУНТ) ---
 
 class RegisterSerializer(serializers.ModelSerializer):
-    # Пароль только для записи, в ответах API его не будет видно
     password = serializers.CharField(write_only=True)
+    email = serializers.EmailField(required=True)
+    first_name = serializers.CharField(required=False, allow_blank=True)
+    last_name = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
         model = User
-        fields = ('username', 'password', 'email', 'first_name', 'last_name')
+        fields = ['username', 'email', 'password', 'first_name', 'last_name']
 
     def create(self, validated_data):
-        # Метод create_user автоматически зашифрует пароль
         user = User.objects.create_user(
             username=validated_data['username'],
+            email=validated_data['email'],
             password=validated_data['password'],
-            email=validated_data.get('email', ''),
             first_name=validated_data.get('first_name', ''),
-            last_name=validated_data.get('last_name', ''),
-            is_author=False
+            last_name=validated_data.get('last_name', '')
         )
         return user
-    
+
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
@@ -126,3 +39,121 @@ class ChangePasswordSerializer(serializers.Serializer):
         if not user.check_password(value):
             raise serializers.ValidationError("Старый пароль введен неверно.")
         return value
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ['id', 'title', 'message', 'is_read', 'created_at']
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    points = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    notifications = NotificationSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name', 'avatar', 'city', 
+            'phone', 'about', 'is_author', 'points', 'notifications'
+        ]
+        read_only_fields = ['username', 'email']
+
+# --- СЕРИАЛИЗАТОРЫ ТОЧЕК ---
+
+class WasteTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WasteType
+        fields = ['id', 'name', 'description']
+
+class PointWastePriceSerializer(serializers.ModelSerializer):
+    waste_type_name = serializers.ReadOnlyField(source='waste_type.name')
+    class Meta:
+        model = PointWastePrice
+        fields = ['id', 'waste_type', 'waste_type_name', 'price_per_kg', 'unit', 'is_available']
+
+class ReviewSerializer(serializers.ModelSerializer):
+    user_name = serializers.ReadOnlyField(source='user.username')
+    class Meta:
+        model = Review
+        fields = ['id', 'user', 'user_name', 'rating', 'text', 'created_at']
+
+class PointSerializer(serializers.ModelSerializer):
+    prices = PointWastePriceSerializer(many=True, required=False)
+    reviews = ReviewSerializer(many=True, read_only=True)
+    average_rating = serializers.SerializerMethodField()
+    coords = serializers.SerializerMethodField()
+    accepted_waste = serializers.SerializerMethodField()
+    likes = serializers.SerializerMethodField()
+    dislikes = serializers.SerializerMethodField()
+    user_reaction = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Point
+        fields = [
+            'id', 'name', 'address', 'latitude', 'longitude', 'coords', 
+            'status', 'prices', 'accepted_waste', 'reviews', 'average_rating', 
+            'working_hours', 'phone', 'description', 'site', 'useful_links',
+            'likes', 'dislikes', 'user_reaction', 'inn', 'legal_entity'
+        ]
+        read_only_fields = ['status']
+
+    def create(self, validated_data):
+        prices_data = validated_data.pop('prices', [])
+        point = Point.objects.create(**validated_data)
+        for price in prices_data:
+            PointWastePrice.objects.create(point=point, **price)
+        return point
+
+    def get_average_rating(self, obj):
+        avg = obj.reviews.aggregate(Avg('rating'))['rating__avg']
+        return round(avg, 1) if avg else 0
+
+    def get_coords(self, obj):
+        return {"lng": obj.location.x, "lat": obj.location.y} if obj.location else None
+
+    def get_accepted_waste(self, obj):
+        return [{"name": p.waste_type.name} for p in obj.prices.filter(is_available=True)]
+
+    def get_likes(self, obj): return obj.reactions.filter(is_like=True).count()
+    def get_dislikes(self, obj): return obj.reactions.filter(is_like=False).count()
+    
+    def get_user_reaction(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            reaction = obj.reactions.filter(user=request.user).first()
+            if reaction:
+                return 'like' if reaction.is_like else 'dislike'
+        return None
+
+# --- СЕРИАЛИЗАТОРЫ СТАТЕЙ ---
+
+class ArticleCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ArticleCategory
+        fields = ['id', 'name', 'slug']
+
+class ArticleListSerializer(serializers.ModelSerializer):
+    category_name = serializers.ReadOnlyField(source='category.name')
+    author_name = serializers.ReadOnlyField(source='author.username')
+    # Добавляем список ID типов сырья, чтобы фронт мог по ним фильтровать
+    waste_types = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+
+    class Meta:
+        model = Article
+        fields = [
+            'id', 'title', 'summary', 'cover_image', 
+            'category', 'category_name', 'author_name', 
+            'views_count', 'published_at', 'waste_types' # Заменили created_at на published_at
+        ]
+
+class ArticleDetailSerializer(serializers.ModelSerializer):
+    category_name = serializers.ReadOnlyField(source='category.name')
+    author_name = serializers.ReadOnlyField(source='author.username')
+    waste_types = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+
+    class Meta:
+        model = Article
+        fields = [
+            'id', 'title', 'summary', 'content', 'cover_image', 
+            'audio_file', 'category', 'category_name', 'author', 
+            'author_name', 'views_count', 'status', 'published_at', 'waste_types'
+        ]
