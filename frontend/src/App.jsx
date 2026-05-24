@@ -7,9 +7,36 @@ import { authService } from './api/services';
 import Login from './Login';
 import Register from './Register'; 
 
+const Footer = () => (
+  <footer 
+    className="w-100 d-flex justify-content-between align-items-center" 
+    style={{ 
+      height: '40px', 
+      backgroundColor: '#F4F6E3', 
+      paddingLeft: '80px', 
+      paddingRight: '80px',
+      flexShrink: 0 // Чтобы футер не сжимался
+    }}
+  >
+    <div style={{ color: '#18442a', fontSize: '12px', fontWeight: 700, fontFamily: 'Actay, sans-serif' }}>
+      «ГдеСдать» © 2026
+    </div>
+    <div style={{ color: '#18442a', fontSize: '12px', fontWeight: 700, fontFamily: 'Actay, sans-serif' }}>
+      Support: <a href="mailto:gdesdat@gmail.com" style={{ color: '#18442a', textDecoration: 'none' }}>gdesdat@gmail.com</a>
+    </div>
+  </footer>
+);
+
 const Home = () => {
   // Состояние для открытия/закрытия дополнительного текста "Читать подробнее"
   const [isExpanded, setIsExpanded] = useState(false);
+
+  // ДАННЫЕ ДЛЯ КАРТОЧЕК (Добавил сюда, чтобы не было белого экрана!)
+  const popularArticles = [
+    { id: 5, image: '/article5.jpg', category: 'Новости отрасли', title: 'Проблема батареек: что делать?', description: 'Почему одна пальчиковая батарейка загрязняет 20 квадратных метров почвы.', date: '21 апреля 18:30', views: 2540, author: 'Эко Патруль' },
+    { id: 6, image: '/article6.jpg', category: 'Советы по сортировке', title: 'Куда девать старую электронику?', description: 'Гайд по утилизации старых смартфонов, ноутбуков и бытовой техники.', date: '20 апреля 12:00', views: 2340, author: 'Иван Иванов' },
+    { id: 7, image: '/article7.jpg', category: 'Экопросвещение', title: 'Мифы о биоразлагаемом пластике', description: 'Почему не всё то эко, что так называется, и как не попасться на гринвошинг.', date: '26 апреля 14:00', views: 2548, author: 'Эко Патруль' }
+  ];
 
   return (
     <div className="w-100">
@@ -148,57 +175,50 @@ const Home = () => {
         }}
       >
         <h3 className="mb-4 font-russkin" style={{ fontSize: '2.2rem', color: '#3F3F3F' }}>ПОПУЛЯРНОЕ</h3>
+        
         <div className="row">
-          
-          <div className="col-12 col-lg-4 mb-4">
-            <div className="card h-100 border-0 p-3 d-flex flex-row" style={{ backgroundColor: '#f1f4e9', borderRadius: '20px' }}>
-              <div style={{ width: '35%', borderRadius: '12px', backgroundColor: '#ddd', backgroundImage: 'url("/card1.jpg")', backgroundSize: 'cover', backgroundPosition: 'center', minHeight: '120px' }}></div>
-              <div className="card-body py-1 pe-0 ps-3 d-flex flex-column justify-content-between" style={{ width: '65%' }}>
-                <div>
-                  <h5 className="font-russkin mb-2" style={{ color: '#18442a', fontSize: '1.1rem', lineHeight: '1.2' }}>ШАГ К ЭКОЛОГИИ. СОРТИРОВКА МУСОРА</h5>
-                  <p style={{ fontSize: '0.85rem', color: '#18442a', marginBottom: '0' }}>Правила, инструкции и полезные советы для новичков...</p>
+          {popularArticles.slice(0, 3).map((article) => (
+            <div key={article.id} className="col-12 col-lg-4 mb-4">
+              <div className="card h-100 border-0 p-3 d-flex flex-column" style={{ backgroundColor: '#f1f4e9', borderRadius: '20px' }}>
+                <div 
+                  style={{ 
+                    width: '100%', 
+                    borderRadius: '12px', 
+                    backgroundColor: '#ddd', 
+                    backgroundImage: `url("${article.image}")`, 
+                    backgroundSize: 'cover', 
+                    backgroundPosition: 'center', 
+                    minHeight: '160px' // Высота картинки
+                  }}
+                ></div>
+                
+                <div className="card-body px-0 pt-3 pb-0 d-flex flex-column justify-content-between" style={{ flexGrow: 1 }}>
+                  <div>
+                    <h5 className="font-russkin mb-2" style={{ color: '#18442a', fontSize: '1.1rem', lineHeight: '1.2', textTransform: 'uppercase' }}>
+                      {article.title}
+                    </h5>
+                    <p style={{ fontSize: '0.85rem', color: '#18442a', marginBottom: '0' }}>
+                      {article.description.length > 60 ? `${article.description.substring(0, 60)}...` : article.description}
+                    </p>
+                  </div>
+                  
+                  {/* Кнопка "Читать >" */}
+                  <Link 
+                    to="/articles" 
+                    onClick={() => {
+                      localStorage.setItem('articleToOpen', JSON.stringify(article));
+                    }}
+                    className="btn bg-white rounded-pill align-self-start mt-3 px-3 py-1 shadow-sm text-decoration-none" 
+                    style={{ fontSize: '0.85rem', color: '#18442a', fontWeight: 400 }}
+                  >
+                    Читать &gt;
+                  </Link>
                 </div>
-                {/* Исправлено: Заменили button на Link для перенаправления */}
-                <Link to="/articles" className="btn bg-white rounded-pill align-self-start mt-3 px-3 py-1 shadow-sm text-decoration-none" style={{ fontSize: '0.85rem', color: '#18442a', fontWeight: 400 }}>
-                  Читать &gt;
-                </Link>
               </div>
             </div>
-          </div>
-
-          <div className="col-12 col-lg-4 mb-4">
-            <div className="card h-100 border-0 p-3 d-flex flex-row" style={{ backgroundColor: '#f1f4e9', borderRadius: '20px' }}>
-              <div style={{ width: '35%', borderRadius: '12px', backgroundColor: '#ddd', backgroundImage: 'url("/card2.jpg")', backgroundSize: 'cover', backgroundPosition: 'center', minHeight: '120px' }}></div>
-              <div className="card-body py-1 pe-0 ps-3 d-flex flex-column justify-content-between" style={{ width: '65%' }}>
-                <div>
-                  <h5 className="font-russkin mb-2" style={{ color: '#18442a', fontSize: '1.1rem', lineHeight: '1.2' }}>КАК МОЯ СЕМЬЯ ОРГАНИЗОВАЛА РАЗДЕЛЬНЫЙ СБОР ОТХОДОВ</h5>
-                  <p style={{ fontSize: '0.85rem', color: '#18442a', marginBottom: '0' }}>Как организовать сбор в квартире, научиться сортировать...</p>
-                </div>
-                {/* Исправлено: Заменили button на Link для перенаправления */}
-                <Link to="/articles" className="btn bg-white rounded-pill align-self-start mt-3 px-3 py-1 shadow-sm text-decoration-none" style={{ fontSize: '0.85rem', color: '#18442a', fontWeight: 400 }}>
-                  Слушать подкаст &gt;
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          <div className="col-12 col-lg-4 mb-4">
-            <div className="card h-100 border-0 p-3 d-flex flex-row" style={{ backgroundColor: '#f1f4e9', borderRadius: '20px' }}>
-              <div style={{ width: '35%', borderRadius: '12px', backgroundColor: '#ddd', backgroundImage: 'url("/card3.jpg")', backgroundSize: 'cover', backgroundPosition: 'center', minHeight: '120px' }}></div>
-              <div className="card-body py-1 pe-0 ps-3 d-flex flex-column justify-content-between" style={{ width: '65%' }}>
-                <div>
-                  <h5 className="font-russkin mb-2" style={{ color: '#18442a', fontSize: '1.1rem', lineHeight: '1.2' }}>ВОЛНЫ ПОДНИМАЮТ ВОПРОСЫ</h5>
-                  <p style={{ fontSize: '0.85rem', color: '#18442a', marginBottom: '0' }}>Эксперимент с рекультивацией загрязненных пляжей...</p>
-                </div>
-                {/* Исправлено: Заменили button на Link для перенаправления */}
-                <Link to="/articles" className="btn bg-white rounded-pill align-self-start mt-3 px-3 py-1 shadow-sm text-decoration-none" style={{ fontSize: '0.85rem', color: '#18442a', fontWeight: 400 }}>
-                  Читать &gt;
-                </Link>
-              </div>
-            </div>
-          </div>
-
+          ))}
         </div>
+
         {/* ИСПРАВЛЕННЫЙ ХОВЕР С ПЛАВНОЙ СТРЕЛОЧКОЙ */}
         <style>
           {`
@@ -393,10 +413,9 @@ const AddPointPanel = ({ onClose, wasteCategories = [], reduceCategories = [], a
     setScheduleBlocks(prev => prev.slice(0, -1));
   };
 
-  const handleSubmit = (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
+    
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = true;
     if (!formData.address.trim()) newErrors.address = true;
@@ -408,9 +427,76 @@ const AddPointPanel = ({ onClose, wasteCategories = [], reduceCategories = [], a
       return;
     }
 
-    console.log("Данные отправлены:", { formData, selectedTypes, prices, scheduleBlocks, selectedFiles });
-    setIsSubmitted(true);
-    setTimeout(() => clearCacheAndClose(), 2000); 
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      alert("Необходима авторизация для добавления точки");
+      return;
+    }
+
+    // 1. Формируем расписание из блоков
+    let formattedSchedule = '';
+    if (formData.scheduleType === 'everyday') {
+      formattedSchedule = "Круглосуточно каждый день";
+    } else {
+      formattedSchedule = scheduleBlocks.map(block => {
+        const days = block.days.length > 0 ? block.days.join(', ') : 'Дни не указаны';
+        const time = `${block.openTime || '00:00'} - ${block.closeTime || '23:59'}`;
+        const breakTime = block.hasBreak ? ` (перерыв ${block.breakStart} - ${block.breakEnd})` : '';
+        return `${days}: ${time}${breakTime}`;
+      }).join('\n');
+    }
+
+    // 2. Формируем массив цен
+    // Важно: бэкенд ждет ID типа отхода (waste_type). 
+    // Нам нужно найти этот ID по имени категории из allCategories
+    const formattedPrices = [];
+    Object.keys(prices).forEach(catName => {
+      // Ищем совпадение по имени или описанию, чтобы получить ID (здесь может потребоваться корректировка логики, если у тебя ID не числа)
+      // ВАЖНО: Тебе нужно убедиться, что allCategories имеет правильные ID из БД Django!
+      const catObj = allCategories.find(c => c.name === catName);
+      const catId = catObj ? catObj.id : null; 
+
+      if (catId) {
+        prices[catName].forEach(p => {
+          if (p.price) { // Отправляем только если указана цена
+            formattedPrices.push({
+              waste_type: catId, 
+              item_spec: p.label,
+              price_per_kg: parseFloat(p.price)
+            });
+          }
+        });
+      }
+    });
+
+    // 3. Собираем итоговый объект для отправки
+    const payload = {
+      name: formData.name,
+      address: formData.address,
+      description: formData.description,
+      phone: formData.phone,
+      site: formData.site,
+      useful_links: formData.links, // Отправляем ссылки
+      working_hours: formattedSchedule,
+      prices: formattedPrices
+      // Фотки пока пропускаем, так как для них нужен FormData (multipart/form-data)
+    };
+
+    try {
+      await axios.post(
+        'http://127.0.0.1:8000/api/points/', 
+        payload, 
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      // Показываем плашку успеха
+      setIsSubmitted(true);
+      setTimeout(() => clearCacheAndClose(), 2000); 
+
+    } catch (error) {
+      console.error("Ошибка при отправке точки:", error);
+      alert("Произошла ошибка при отправке. Проверьте консоль.");
+    }
   };
 
   const currentCategories = activeTab === 'waste' ? wasteCategories : reduceCategories;
@@ -654,12 +740,23 @@ const MapPage = () => {
   const mapRef = useRef(null);
   const [isPanelScrolled, setIsPanelScrolled] = useState(false);
   // --- ЛОГИКА ЛАЙКОВ ДЛЯ ПУНКТА ---
-  const [pointLikes, setPointLikes] = useState(122);
+  const [pointLikes, setPointLikes] = useState(0);
   const [pointDislikes, setPointDislikes] = useState(0);
   const [userPointReaction, setUserPointReaction] = useState(null);
 
   const handlePointReaction = async (type) => {
     if (!selectedPointData) return;
+
+    const token = localStorage.getItem('access_token');
+    
+    if (!token) {
+      alert("Войдите в аккаунт, чтобы ставить оценки");
+      return;
+    }
+
+    const oldLikes = pointLikes;
+    const oldDislikes = pointDislikes;
+    const oldReaction = userPointReaction;
     
     // Оптимистичное обновление UI
     if (type === 'like') {
@@ -673,15 +770,97 @@ const MapPage = () => {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      // Отправляем лайк к конкретной ТОЧКЕ
-      await axios.post(
-        `http://127.0.0.1:8000/api/points/${selectedPointData.id}/reaction`,
+      // 3. ИСПРАВЛЕНИЕ: Добавили слеш в конце URL /reaction/
+      const response = await axios.post(
+        `http://127.0.0.1:8000/api/points/${selectedPointData.id}/reaction/`,
         { reaction: type },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      console.log("Реакция сохранена на сервере:", response.data);
+
+      // 4. Синхронизируем данные во всех состояниях
+      const updatedPoints = points.map(p => {
+        if (p.id === selectedPointData.id) {
+          const isRemoving = oldReaction === type;
+          const isSwitching = oldReaction !== null && oldReaction !== type;
+          
+          let newLikes = p.likes || 0;
+          let newDislikes = p.dislikes || 0;
+
+          if (type === 'like') {
+            newLikes = isRemoving ? newLikes - 1 : newLikes + 1;
+            if (isSwitching) newDislikes--;
+          } else {
+            newDislikes = isRemoving ? newDislikes - 1 : newDislikes + 1;
+            if (isSwitching) newLikes--;
+          }
+
+          const updatedPoint = { 
+            ...p, 
+            likes: newLikes, 
+            dislikes: newDislikes, 
+            user_reaction: isRemoving ? null : type 
+          };
+          
+          // Обновляем selectedPointData, чтобы при скролле или кликах данные не прыгали
+          setSelectedPointData(updatedPoint);
+          return updatedPoint;
+        }
+        return p;
+      });
+
+    setPoints(updatedPoints);
+
     } catch (error) {
-      console.error('Ошибка при отправке реакции на пункт:', error);
+      console.error('Ошибка при отправке реакции:', error);
+      // Если сервер вернул ошибку, откатываем UI к старым значениям
+      setPointLikes(oldLikes);
+      setPointDislikes(oldDislikes);
+      setUserPointReaction(oldReaction);
+      alert("Не удалось сохранить оценку. Попробуйте позже.");
+    }
+  };
+
+  const submitComment = async () => {
+    if (!newCommentText.trim()) return; // Защита от пустых сообщений
+
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      alert("Войдите в аккаунт, чтобы оставить комментарий");
+      return;
+    }
+
+    try {
+      // Отправляем текст на наш новый эндпоинт
+      const response = await axios.post(
+        `http://127.0.0.1:8000/api/points/${selectedPointData.id}/add_review/`,
+        { text: newCommentText, rating: 5 }, // Отправляем текст и дефолтную оценку
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const newReview = response.data; // Бэкенд возвращает готовый объект комментария
+
+      // Мгновенно обновляем панель (добавляем коммент в начало списка)
+      const updatedPoint = {
+        ...selectedPointData,
+        reviews: [newReview, ...(selectedPointData.reviews || [])]
+      };
+      
+      setSelectedPointData(updatedPoint);
+      
+      // Обновляем общий список точек, чтобы коммент не пропал при закрытии/открытии панели
+      setPoints(prevPoints => prevPoints.map(p => 
+        p.id === selectedPointData.id ? updatedPoint : p
+      ));
+
+      // Очищаем форму и закрываем её
+      setNewCommentText('');
+      setIsAddingComment(false);
+
+    } catch (error) {
+      console.error('Ошибка при отправке комментария:', error);
+      alert('Не удалось отправить комментарий. Попробуйте позже.');
     }
   };
 
@@ -733,15 +912,26 @@ const MapPage = () => {
   const allCategories = [...wasteCategories, ...reduceCategories];
 
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/api/points/')
-      .then(res => res.json())
-      .then(data => { 
-        // ВРЕМЕННЫЙ ЛОГ ДЛЯ ДЕБАГА
-        console.log("👉 СТРУКТУРА ПУНКТА С БЭКЕНДА:", data[0]); 
-        setPoints(data); 
+    // 1. Пытаемся достать токен
+    const token = localStorage.getItem('access_token');
+    
+    // 2. Настраиваем конфиг для запроса
+    const config = token 
+      ? { headers: { Authorization: `Bearer ${token}` } } 
+      : {};
+
+    // 3. Используем axios вместо обычного fetch для единообразия
+    axios.get('http://127.0.0.1:8000/api/points/', config)
+      .then(res => { 
+        console.log("✅ Данные точек загружены с учетом авторизации:", res.data[0]);
+        setPoints(res.data); 
         setLoading(false); 
       })
-      .catch(err => { setError(err.message); setLoading(false); });
+      .catch(err => { 
+        console.error("❌ Ошибка при загрузке точек:", err);
+        setError(err.message); 
+        setLoading(false); 
+      });
   }, []);
 
   useEffect(() => {
@@ -793,6 +983,33 @@ const MapPage = () => {
     return "ТОЧЕК"; 
   };
 
+  const submitEditSuggestion = async () => {
+    if (!editSuggestion.trim()) return;
+
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      alert("Войдите в аккаунт, чтобы предложить исправление");
+      return;
+    }
+
+    try {
+      await axios.post(
+        `http://127.0.0.1:8000/api/points/${selectedPointData.id}/suggest_edit/`,
+        { text: editSuggestion },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Очищаем форму, закрываем её и показываем уведомление
+      setIsEditingPoint(false);
+      setEditSuggestion('');
+      alert('Спасибо! Ваше исправление отправлено модераторам.');
+
+    } catch (error) {
+      console.error('Ошибка при отправке исправления:', error);
+      alert('Не удалось отправить исправление. Попробуйте позже.');
+    }
+  };
+
   const getFoundWord = (number) => {
     const lastDigit = number % 10;
     const lastTwoDigits = number % 100;
@@ -808,6 +1025,10 @@ const MapPage = () => {
       setSelectedPointData(point);
       setIsPanelScrolled(false); // Сбрасываем стиль крестика при новой точке
 
+      setPointLikes(point.likes || 0);
+      setPointDislikes(point.dislikes || 0);
+      setUserPointReaction(point.user_reaction || null);
+
       // Получаем координаты точки
       const lat = point.coordinates?.lat || point.latitude || point.coordinates?.[0];
       const lng = point.coordinates?.lng || point.longitude || point.coordinates?.[1];
@@ -822,6 +1043,56 @@ const MapPage = () => {
       }
     }
   };
+
+  // --- ДАННЫЕ ДЛЯ АКЦИЙ ---
+const [expandedPromos, setExpandedPromos] = useState([]);
+const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
+const [cityQuery, setCityQuery] = useState(''); // <-- СОСТОЯНИЕ ВВОДА ТЕКСТА
+
+const togglePromo = (id) => {
+    setExpandedPromos(prev => prev.includes(id) ? prev.filter(pId => pId !== id) : [...prev, id]);
+};
+
+const cities = ["Москва", "Санкт-Петербург", "Екатеринбург", "Новосибирск", "Казань", "Нижний Новгород", "Челябинск"];
+
+const promoItems = [
+    {
+        id: 1,
+        title: "Умная переработка",
+        address: "г. Екатеринбург, улица Готвальда, 24/4",
+        city: "Екатеринбург", // <-- ВАЖНО: ДОБАВЛЕН ГОРОД!
+        date: "24 апреля",
+        description: "Сбор старых батареек и аккумуляторов. Один человек может сдать до 2 кг за раз по спец.цене. Все собранное отправится на переработку в Челябинск.",
+        isLong: true
+    },
+    {
+        id: 2,
+        title: "Умная переработка",
+        address: "г. Екатеринбург, улица Готвальда, 24/4",
+        city: "Екатеринбург", // <-- ВАЖНО: ДОБАВЛЕН ГОРОД!
+        date: "24 апреля",
+        description: "Сбор старых батареек и аккумуляторов. Один человек может сдать до 2 кг за раз по спец.цене. Все собранное отправится на переработку в Челябинск. Приносите более 5 кг пластика и получайте купон на зерновой кофе у наших партнеров. Акция действует до конца недели.",
+        isLong: true
+    },
+    {
+        id: 3,
+        title: "Вторая жизнь вещам",
+        address: "г. Москва, проспект Мира, 119",
+        city: "Москва", // <-- ВАЖНО: ДОБАВЛЕН ГОРОД!
+        date: "1 мая",
+        description: "Принимаем старую одежду в хорошем состоянии. Первым 50 участникам выдаем эко-сумку в подарок.",
+        isLong: false
+    }
+];
+
+// Фильтруем города для выпадающего списка
+const filteredCities = cities.filter(city => city.toLowerCase().includes(cityQuery.toLowerCase()));
+
+// Фильтруем акции безопасно (с проверкой, что promo.city существует)
+const filteredPromos = cityQuery 
+    ? promoItems.filter(promo => promo.city && promo.city.toLowerCase().includes(cityQuery.toLowerCase()))
+    : promoItems;
+  // ------------------------
 
   return (
     <div className="d-flex flex-column" style={{ height: 'calc(100vh - 80px)', backgroundColor: '#f1f4e9' }}>
@@ -1006,6 +1277,206 @@ const MapPage = () => {
                 ))
               )}
             </div>
+            {/* Разделительная линия между пунктами и акциями */}
+                        <hr style={{ margin: '0 -32px 24px -32px', border: 'none', borderTop: '1px solid #EDEDED', opacity: 1 }} />
+
+                        {/* Блок АКЦИИ */}
+                        <div className="mb-4">
+                            <h4 className="font-russkin" style={{ color: '#18442A', fontSize: '37px', textTransform: 'uppercase', marginLeft: '8px', marginBottom: '16px' }}>
+                                Акции
+                            </h4>
+                
+                {/* Поисковая строка с вводом */}
+                <div className="position-relative mb-4 px-2" style={{ fontFamily: 'Actay, sans-serif' }}>
+                    <div className="position-relative" style={{ zIndex: isCityDropdownOpen ? 1002 : 1 }}>
+                        <input 
+                            type="text" 
+                            className="form-control shadow-none" 
+                            placeholder="Введите город..." 
+                            value={cityQuery}
+                            onChange={(e) => {
+                                setCityQuery(e.target.value);
+                                setIsCityDropdownOpen(true);
+                            }}
+                            onClick={() => setIsCityDropdownOpen(true)}
+                            style={{ 
+                                borderRadius: '8px', 
+                                border: '1px solid #18442A', 
+                                fontSize: '14px',
+                                padding: '10px 16px',
+                                paddingRight: '36px',
+                                fontFamily: 'Actay, sans-serif',
+                                height: '42px',
+                                color: '#18442A'
+                            }} 
+                        />
+                        <i className={`bi bi-chevron-${isCityDropdownOpen ? 'up' : 'down'}`}
+                            onClick={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
+                            style={{ 
+                                position: 'absolute',
+                                right: '16px', 
+                                top: '50%', 
+                                transform: 'translateY(-50%)', 
+                                color: '#18442A',
+                                fontSize: '14px',
+                                cursor: 'pointer',
+                                lineHeight: 0
+                            }}>
+                        </i>
+                    </div>
+
+                    {/* Выпадающий список городов */}
+                    {isCityDropdownOpen && (
+                        <>
+                            <div 
+                                style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000 }} 
+                                onClick={() => setIsCityDropdownOpen(false)}
+                            />
+                            <div className="position-absolute shadow" style={{ 
+                                zIndex: 1001,
+                                backgroundColor: '#fff', 
+                                borderRadius: '8px', 
+                                border: '1px solid #E7EFE8',
+                                maxHeight: '200px',
+                                overflowY: 'auto',
+                                top: '46px', 
+                                left: '8px', 
+                                width: 'calc(100% - 16px)'
+                            }}>
+                                {filteredCities.length === 0 ? (
+                                    <div className="py-2 px-3 text-muted" style={{ fontSize: '13px' }}>Совпадений не найдено</div>
+                                ) : (
+                                    <>
+                                        <div 
+                                            onClick={() => { setCityQuery(''); setIsCityDropdownOpen(false); }}
+                                            className="py-2 px-3"
+                                            style={{ cursor: 'pointer', fontSize: '13px', color: '#A0A0A0', borderBottom: '1px solid #E7EFE8' }}
+                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F4F6E3'}
+                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                        >
+                                            Все города
+                                        </div>
+                                        {filteredCities.map((city, idx) => (
+                                            <div 
+                                                key={idx}
+                                                onClick={() => { setCityQuery(city); setIsCityDropdownOpen(false); }}
+                                                className="py-2 px-3"
+                                                style={{ 
+                                                    cursor: 'pointer', 
+                                                    fontSize: '14px', 
+                                                    color: cityQuery === city ? '#6BAD86' : '#18442A',
+                                                    fontWeight: cityQuery === city ? '600' : '400'
+                                                }}
+                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F4F6E3'}
+                                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                            >
+                                                {city}
+                                            </div>
+                                        ))}
+                                    </>
+                                )}
+                            </div>
+                        </>
+                    )}
+                </div>
+
+                {/* Список карточек акций */}
+                <div className="d-flex flex-column gap-3 px-2 pb-4">
+                    {filteredPromos.length === 0 ? (
+                        <p className="text-center mt-2 mb-4" style={{ fontSize: '13px', color: '#A0A0A0', fontFamily: 'Actay, sans-serif' }}>
+                            В выбранном городе пока нет акций
+                        </p>
+                    ) : (
+                        filteredPromos.map((promo) => {
+                            const isExpanded = expandedPromos.includes(promo.id);
+                            return (
+                                <div key={promo.id} className="d-flex flex-column" style={{ 
+                                    border: '1px solid #BDE3C3', 
+                                    boxShadow: '0 0 15px rgba(189, 227, 195, 0.4)',
+                                    borderRadius: '16px', 
+                                    overflow: 'hidden',
+                                    backgroundColor: '#ffffff'
+                                }}>
+                                    <div className="p-3 pb-2">
+                                        <div className="d-flex justify-content-between align-items-start mb-1">
+                                            <h6 className="mb-0" style={{ color: '#18442A', fontSize: '18px', fontFamily: 'Actay Wide, sans-serif' }}>
+                                                {promo.title}
+                                            </h6>
+                                            <span style={{ 
+                                                backgroundColor: '#F4F6E3', 
+                                                color: '#939393', 
+                                                fontSize: '11px', 
+                                                padding: '4px 10px', 
+                                                borderRadius: '6px', 
+                                                whiteSpace: 'nowrap',
+                                                fontFamily: 'Actay, sans-serif'
+                                            }}>
+                                                {promo.date}
+                                            </span>
+                                        </div>
+                                        <p className="mb-2" style={{ fontSize: '12px', color: '#A0A0A0', fontFamily: 'Actay, sans-serif' }}>
+                                            {promo.address}
+                                        </p>
+                                        <p className="mb-0" style={{ 
+                                            fontSize: '13px', 
+                                            color: '#18442A', 
+                                            lineHeight: '1.4',
+                                            display: '-webkit-box',
+                                            WebkitLineClamp: isExpanded ? 'unset' : '3',
+                                            WebkitBoxOrient: 'vertical',
+                                            overflow: 'hidden',
+                                            fontFamily: 'Actay, sans-serif' 
+                                        }}>
+                                            {promo.description}
+                                        </p>
+                                        {promo.isLong && (
+                                            <span 
+                                                onClick={() => togglePromo(promo.id)}
+                                                style={{ 
+                                                    fontSize: '13px', 
+                                                    color: '#18442A', 
+                                                    textDecoration: 'underline', 
+                                                    cursor: 'pointer',
+                                                    fontFamily: 'Actay Wide, sans-serif',
+                                                    display: 'inline-block',
+                                                    marginTop: '6px'
+                                                }}
+                                            >
+                                                {isExpanded ? 'Свернуть' : 'Развернуть'}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div 
+                                        className="w-100 py-2 d-flex justify-content-center align-items-center" 
+                                        style={{ 
+                                            backgroundColor: '#F4F6E3', 
+                                            cursor: 'pointer',
+                                            transition: 'background-color 0.2s ease',
+                                            marginTop: '8px'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#EBEDDD'}
+                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#F4F6E3'}
+                                    >
+                                        <span style={{ 
+                                            color: '#6BAD86', 
+                                            fontSize: '13px', 
+                                            fontFamily: 'Actay Wide, sans-serif', 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            gap: '8px' 
+                                        }}>
+                                            Нажмите для перехода к карточке
+                                            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M7.50008 4.99995C7.49805 4.78074 7.40973 4.57115 7.25425 4.41661L5.46675 2.62495C5.38868 2.54734 5.28308 2.50378 5.173 2.50378C5.06292 2.50378 4.95732 2.54734 4.87925 2.62495C4.84019 2.66368 4.8092 2.70977 4.78804 2.76054C4.76689 2.81132 4.756 2.86578 4.756 2.92078C4.756 2.97579 4.76689 3.03025 4.78804 3.08102C4.8092 3.1318 4.84019 3.17788 4.87925 3.21661L6.25008 4.58328H2.08341C1.97291 4.58328 1.86693 4.62718 1.78879 4.70532C1.71065 4.78346 1.66675 4.88944 1.66675 4.99995C1.66675 5.11045 1.71065 5.21643 1.78879 5.29457C1.86693 5.37271 1.97291 5.41661 2.08341 5.41661H6.25008L4.87925 6.78744C4.80079 6.86535 4.75649 6.97123 4.7561 7.0818C4.75571 7.19237 4.79926 7.29857 4.87716 7.37703C4.95507 7.45549 5.06096 7.49978 5.17153 7.50017C5.28209 7.50057 5.38829 7.45702 5.46675 7.37911L7.25425 5.58744C7.41074 5.43188 7.49915 5.2206 7.50008 4.99995Z" fill="#6BAD86"/>
+                                            </svg>
+                                        </span>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
+            </div>
           </div>
         )}
 
@@ -1014,7 +1485,6 @@ const MapPage = () => {
 
           {/* ВЫЕЗЖАЮЩАЯ ДЕТАЛЬНАЯ ПАНЕЛЬ ПУНКТА */}
           {selectedPointData && (
-            // Внешняя обёртка без overflow — крестик будет жить здесь
             <div
               className="bg-white shadow"
               style={{
@@ -1023,15 +1493,13 @@ const MapPage = () => {
                 zIndex: 1000,
               }}
             >
-              {/* ПЛАВАЮЩИЙ КРЕСТИК — всегда поверх скролла и фото */}
+              {/* ПЛАВАЮЩИЙ КРЕСТИК */}
               <div
                 style={{
                   position: 'absolute', top: '16px', right: '16px',
-                  zIndex: 1100,
-                  cursor: 'pointer',
+                  zIndex: 1100, cursor: 'pointer',
                   backgroundColor: isPanelScrolled ? 'white' : 'transparent',
-                  borderRadius: '50%',
-                  width: '36px', height: '36px',
+                  borderRadius: '50%', width: '36px', height: '36px',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   boxShadow: isPanelScrolled ? '0 2px 8px rgba(0,0,0,0.18)' : 'none',
                   transition: 'background-color 0.2s ease, box-shadow 0.2s ease',
@@ -1046,7 +1514,7 @@ const MapPage = () => {
                 style={{ overflowY: 'auto', height: '100%', padding: '32px' }}
                 onScroll={(e) => setIsPanelScrolled(e.target.scrollTop > 10)}
               >
-                {/* Заголовок — старый крестик УБИРАЕМ, paddingRight чтобы текст не лез под крестик */}
+                {/* ЗАГОЛОВОК */}
                 <div className="mb-3">
                   <h3
                     className="font-russkin m-0"
@@ -1055,121 +1523,175 @@ const MapPage = () => {
                     {selectedPointData.name}
                   </h3>
                 </div>
-              
-                {/* ВСЁ ОСТАЛЬНОЕ СОДЕРЖИМОЕ ПАНЕЛИ БЕЗ ИЗМЕНЕНИЙ */}
-                {/* (теги категорий, фото, лайки, адрес, режим работы, контакты, описание, цены, комментарии, футер) */}
 
+                {/* ТЕГИ */}
                 <div className="d-flex gap-2 mb-3 flex-wrap">
                   {(selectedPointData.accepted_waste || selectedPointData.materials || selectedPointData.wastes || []).map((w, i) => {
                     const wasteName = typeof w === 'string' ? w : (w?.name || '');
                     if (!wasteName) return null;
                     const catData = allCategories.find(c => c.name === wasteName);
                     return (
-                      <span key={w?.id || i} style={{ backgroundColor: catData ? catData.color : '#f1f4e9', color: '#18442A', fontSize: '12px', padding: '6px 14px', borderRadius: '12px' }}>{wasteName}</span>
+                      <span key={w?.id || i} style={{ backgroundColor: catData ? catData.color : '#f1f4e9', color: '#18442A', fontSize: '12px', padding: '6px 14px', borderRadius: '12px' }}>
+                        {wasteName}
+                      </span>
                     )
                   })}
                 </div>
                 
+                {/* ФОТО */}
                 <div className="w-100 mb-2 rounded" style={{ height: '220px', backgroundColor: '#e9ecef', backgroundImage: 'url(https://via.placeholder.com/480x220?text=Фото+пункта)', backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
 
-              {/* Лайки и дизлайки пункта под фото */}
-              <div className="d-flex gap-3 mt-3 mb-2" style={{ fontSize: '13px', color: '#18442A' }}>
-                <span 
-                  className="d-flex align-items-center" 
-                  onClick={() => handlePointReaction('like')}
-                  style={{ cursor: 'pointer', transition: '0.2s' }}
-                >
-                  <img 
-                    src={userPointReaction === 'like' ? "/icons/like_filled.png" : "/icons/like.png"} 
-                    alt="Like" 
-                    style={{ width: '15px', height: '15px', marginRight: '6px' }} 
-                  /> 
-                  {pointLikes}
-                </span>
-                <span 
-                  className="d-flex align-items-center" 
-                  onClick={() => handlePointReaction('dislike')}
-                  style={{ cursor: 'pointer', transition: '0.2s' }}
-                >
-                  <img 
-                    src={userPointReaction === 'dislike' ? "/icons/dislike_filled.png" : "/icons/dislike.png"} 
-                    alt="Dislike" 
-                    style={{ width: '15px', height: '15px', marginRight: '6px' }} 
-                  /> 
-                  {pointDislikes > 0 ? pointDislikes : 0}
-                </span>
-              </div>
+                {/* ЛАЙКИ И ДИЗЛАЙКИ */}
+                <div className="d-flex gap-3 mt-3 mb-2" style={{ fontSize: '13px', color: '#18442A' }}>
+                  <span 
+                    className="d-flex align-items-center" 
+                    onClick={() => handlePointReaction('like')}
+                    style={{ cursor: 'pointer', transition: '0.2s' }}
+                  >
+                    <img 
+                      src={userPointReaction === 'like' ? "/icons/like_filled.png" : "/icons/like.png"} 
+                      alt="Like" 
+                      style={{ width: '15px', height: '15px', marginRight: '6px' }} 
+                    /> 
+                    {pointLikes}
+                  </span>
+                  <span 
+                    className="d-flex align-items-center" 
+                    onClick={() => handlePointReaction('dislike')}
+                    style={{ cursor: 'pointer', transition: '0.2s' }}
+                  >
+                    <img 
+                      src={userPointReaction === 'dislike' ? "/icons/dislike_filled.png" : "/icons/dislike.png"} 
+                      alt="Dislike" 
+                      style={{ width: '15px', height: '15px', marginRight: '6px' }} 
+                    /> 
+                    {pointDislikes > 0 ? pointDislikes : 0}
+                  </span>
+                </div>
                 
+                {/* АДРЕС И РЕЖИМ РАБОТЫ */}
                 <div className="d-flex flex-column gap-3 mb-4 mt-3">
                   <div>
                     <h6 className="font-russkin" style={{ color: '#18442a', fontSize: '23px', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}><img src="/icons/marker.png" alt="Address" style={{ width: '12px', height: '12px' }} /> АДРЕС</h6>
-                    <p className="mb-0 ms-4 mt-1" style={{ fontSize: '13px', color: '#18442A' }}>{selectedPointData.address || 'ул. Чайковского, 82а'}</p>
+                    <p className="mb-0 ms-4 mt-1" style={{ fontSize: '13px', color: '#18442A' }}>{selectedPointData.address || 'Адрес не указан'}</p>
                   </div>
                   <div>
                     <h6 className="font-russkin" style={{ color: '#18442a', fontSize: '23px', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}><img src="/icons/clock.png" alt="Time" style={{ width: '12px', height: '12px' }} /> РЕЖИМ РАБОТЫ</h6>
-                    <div className="ms-4 mt-1" style={{ fontSize: '13px', color: '#18442A', lineHeight: '1.4' }}>понедельник: 16:00 - 19:00<br/>вторник: 16:00 - 19:00<br/>среда: 16:00 - 19:00<br/>воскресенье: 10:00 - 16:00</div>
+                    <div className="ms-4 mt-1" style={{ fontSize: '13px', color: '#18442A', lineHeight: '1.4', whiteSpace: 'pre-line' }}>
+                      {typeof selectedPointData.working_hours === 'string' 
+                        ? selectedPointData.working_hours 
+                        : (selectedPointData.working_hours && Object.keys(selectedPointData.working_hours).length > 0)
+                          ? Object.entries(selectedPointData.working_hours).map(([day, time]) => `${day}: ${time}`).join('\n')
+                          : 'Режим работы не указан'}
+                    </div>
                   </div>
                   <div className="mt-2 d-flex flex-column gap-2">
-                    <div className="d-flex align-items-center gap-2" style={{ fontSize: '13px', color: '#18442A' }}>
-                      <img src="/icons/planet.png" alt="Website" style={{ width: '10px', height: '10px', marginLeft: '1px' }} /> 
-                      <a href="https://uralvtorma.ru" target="_blank" rel="noopener noreferrer" style={{ color: '#18442A', textDecoration: 'none' }}>uralvtorma.ru</a>
-                    </div>
-                    <div className="d-flex align-items-center gap-2" style={{ fontSize: '13px', color: '#18442A' }}>
-                      <img src="/icons/plane.png" alt="VK" style={{ width: '10px', height: '10px', marginLeft: '1px' }} /> 
-                      <a href="https://vk.com/club206427178" target="_blank" rel="noopener noreferrer" style={{ color: '#18442A', textDecoration: 'none' }}>vk.com/club206427178</a>
-                    </div>
-                    <div className="d-flex align-items-center gap-2" style={{ fontSize: '13px', color: '#18442A' }}>
-                      <img src="/icons/phone.png" alt="Phone" style={{ width: '10px', height: '10px', marginLeft: '1px' }} /> 
-                      <a href="tel:+79043823130" style={{ color: '#18442A', textDecoration: 'none' }}>+7 904 382-31-30</a>
-                    </div>
+                    {/* Контакты: если с бэка придут site или vk, мы их покажем. Пока жестко привязан телефон */}
+                    {selectedPointData.site && (
+                      <div className="d-flex align-items-center gap-2" style={{ fontSize: '13px', color: '#18442A' }}>
+                        <img src="/icons/planet.png" alt="Website" style={{ width: '10px', height: '10px', marginLeft: '1px' }} /> 
+                        <a href={selectedPointData.site.startsWith('http') ? selectedPointData.site : `https://${selectedPointData.site}`} target="_blank" rel="noopener noreferrer" style={{ color: '#18442A', textDecoration: 'none' }}>{selectedPointData.site}</a>
+                      </div>
+                    )}
+                    {selectedPointData.phone && (
+                      <div className="d-flex align-items-center gap-2" style={{ fontSize: '13px', color: '#18442A' }}>
+                        <img src="/icons/phone.png" alt="Phone" style={{ width: '10px', height: '10px', marginLeft: '1px' }} /> 
+                        <a href={`tel:${selectedPointData.phone}`} style={{ color: '#18442A', textDecoration: 'none' }}>{selectedPointData.phone}</a>
+                      </div>
+                    )}
                   </div>
                 </div>
                 
+                {/* ОПИСАНИЕ */}
                 <h6 className="font-russkin" style={{ color: '#18442a', fontSize: '23px', textTransform: 'uppercase', margin: '0 0 8px 0' }}>ОПИСАНИЕ</h6>
-                <p style={{ fontSize: '13px', color: '#18442A', lineHeight: '1.5', marginBottom: '32px' }}>Наша компания принимает макулатуру, пластик и плёнку на самых выгодных условиях. Наша компания осуществляет: - Прием макулатуры в Екатеринбурге - Вывоз макулатуры в Екатеринбурге - Уничтожение макулатуры путем переработки.</p>
+                <p style={{ fontSize: '13px', color: '#18442A', lineHeight: '1.5', marginBottom: '32px', whiteSpace: 'pre-line' }}>
+                  {selectedPointData.description || 'Описание отсутствует.'}
+                </p>
                 
                 <hr style={{ margin: '0 -32px 32px -32px', border: 'none', borderTop: '1px solid #E7EFE8', opacity: 1 }} />
                 
+                {/* ДИНАМИЧЕСКИЕ ЦЕНЫ (С ГРУППИРОВКОЙ ПО КОЛОНКАМ) */}
                 <h6 className="font-russkin" style={{ color: '#18442a', fontSize: '23px', textTransform: 'uppercase', margin: '0 0 12px 0' }}>ЦЕНЫ</h6>
-                <div className="row g-3 mb-4">
-                   <div className="col-6">
-                      <span style={{ backgroundColor: '#CDE5FD', color: '#18442A', fontSize: '12px', padding: '4px 12px', borderRadius: '12px' }}>Пластик</span>
-                      <div className="mt-2" style={{ fontSize: '11px', color: '#18442A', lineHeight: '1.3' }}>Ящик для фруктов б/у - от 3 руб./кг;<br/>ПВД, прозрачная - от 15 руб./кг;<br/>Стрейч, прозрачная - от 17 руб./кг;<br/>Микс (ПВД + стрейч), прозрачная - от 12 руб./кг;</div>
-                      <div className="mt-3"><span style={{ backgroundColor: '#FFC8C8', color: '#18442A', fontSize: '12px', padding: '4px 12px', borderRadius: '12px' }}>Бумага</span></div>
-                      <div className="mt-2" style={{ fontSize: '11px', color: '#18442A', lineHeight: '1.3' }}>МН-7Б (книги, журналы, тетради) - от 7 руб./кг<br/>МН-8В (газеты, газетная бумага) - от 11 руб./кг<br/>МН-5Б (картон) - от 4 руб./кг<br/>МН-6Б (хром-эрзац) - от 4 руб./кг<br/>МН-7Б/1 (архивы) - от 10 руб./кг<br/>МН-13В (смешанная) - от 2 руб./кг</div>
-                   </div>
-                   <div className="col-6">
-                      <span style={{ backgroundColor: '#F8F6B7', color: '#18442A', fontSize: '12px', padding: '4px 12px', borderRadius: '12px' }}>Крышки</span>
-                      <div className="mt-2 mb-3" style={{ fontSize: '11px', color: '#18442A', lineHeight: '1.3' }}>HDPE, PE-HD, PE - 20 руб./кг</div>
-                      <div className="mt-3"><span style={{ backgroundColor: '#C4C2FF', color: '#18442A', fontSize: '12px', padding: '4px 12px', borderRadius: '12px' }}>Металл</span></div>
-                      <div className="mt-2" style={{ fontSize: '11px', color: '#18442A', lineHeight: '1.3' }}>Чугун - 17 руб./кг<br/>Оцинковка - 17 руб./кг<br/>Дюраль - 100 руб./кг<br/>Сталь 5А - 17 руб./кг</div>
-                   </div>
-                </div>
+                {(() => {
+                  const prices = selectedPointData.prices || [];
+                  if (prices.length === 0) return <p style={{ fontSize: '13px', color: '#A0A0A0' }}>Цены не указаны</p>;
+
+                  // 1. ИСПРАВЛЕНИЕ: Группируем цены по новой переменной waste_category (Пластик, Бумага)
+                  const groupedPrices = {};
+                  prices.forEach(p => {
+                    const catName = p.waste_category || 'Другое';
+                    if (!groupedPrices[catName]) groupedPrices[catName] = [];
+                    groupedPrices[catName].push(p);
+                  });
+
+                  // Разбиваем на 2 колонки
+                  const categoryNames = Object.keys(groupedPrices);
+                  const half = Math.ceil(categoryNames.length / 2);
+                  const leftCategories = categoryNames.slice(0, half);
+                  const rightCategories = categoryNames.slice(half);
+
+                  const renderCategory = (catName) => {
+                    const catColor = allCategories.find(c => c.name === catName)?.color || '#F4F6E3';
+                    return (
+                      <React.Fragment key={catName}>
+                        <div className="mt-3"><span style={{ backgroundColor: catColor, color: '#18442A', fontSize: '12px', padding: '4px 12px', borderRadius: '12px' }}>{catName}</span></div>
+                        <div className="mt-2" style={{ fontSize: '11px', color: '#18442A', lineHeight: '1.3' }}>
+                          {groupedPrices[catName].map((p, idx) => (
+                            <div key={idx} style={{ marginBottom: '4px' }}>
+                              {/* 2. ИСПРАВЛЕНИЕ: Выводим конкретное название сырья (waste_type_name) и уточнение */}
+                              {p.waste_type_name} {p.item_spec ? `(${p.item_spec})` : ''} - от {p.price_per_kg} руб./{p.unit || 'кг'}
+                            </div>
+                          ))}
+                        </div>
+                      </React.Fragment>
+                    );
+                  };
+
+                  return (
+                    <div className="row g-3 mb-4">
+                       <div className="col-6">
+                         {leftCategories.map((cat, i) => (
+                           <div key={cat} style={{ marginTop: i === 0 ? '-16px' : '0' }}>{renderCategory(cat)}</div>
+                         ))}
+                       </div>
+                       <div className="col-6">
+                         {rightCategories.map((cat, i) => (
+                           <div key={cat} style={{ marginTop: i === 0 ? '-16px' : '0' }}>{renderCategory(cat)}</div>
+                         ))}
+                       </div>
+                    </div>
+                  );
+                })()}
                 
                 <hr style={{ margin: '32px -32px 32px -32px', border: 'none', borderTop: '1px solid #E7EFE8', opacity: 1 }} />
                 
+                {/* ДИНАМИЧЕСКИЕ КОММЕНТАРИИ */}
                 <h6 className="font-russkin" style={{ color: '#18442a', fontSize: '23px', textTransform: 'uppercase', margin: '0 0 24px 0' }}>КОММЕНТАРИИ</h6>
                 
                 <div className="d-flex flex-column gap-4 mb-3">
-                  {[
-                    { id: 1, authorName: 'Брэд Питт', date: '11 апреля 2026', text: 'Правило номер один: не говорить о приёме вторсырья. Правило номер два: НИКОГДА НЕ ГОВОРИТЬ О ПРИЕМЕ ВТОРСЫРЬЯ.', likesCount: 122, dislikesCount: 0 },
-                    { id: 2, authorName: 'Дональд Трамп', date: '1 февраля 2026', text: 'Make вторсырье great again!', likesCount: 0, dislikesCount: 0 },
-                    { id: 3, authorName: 'Eminem', date: '13 ноября 2025', text: 'Заплатили копейки, но хоть не потерял себя. Мама, я сдал мусор.', likesCount: 0, dislikesCount: 0 },
-                    { id: 4, authorName: 'Тайлер Дерден', date: '10 мая 2025', text: 'Лишь утратив всё до конца, мы обретаем свободу сортировать мусор.', likesCount: 50, dislikesCount: 2 }
-                  ]
-                  .slice(0, showAllComments ? undefined : 3)
-                  .map(comment => (
-                    <CommentItem key={comment.id} comment={comment} />
-                  ))}
+                  {selectedPointData.reviews && selectedPointData.reviews.length > 0 ? (
+                    selectedPointData.reviews.slice(0, showAllComments ? undefined : 3).map(review => (
+                      <CommentItem 
+                        key={review.id} 
+                        comment={{
+                          authorName: review.author_name || review.user || 'Аноним',
+                          date: new Date(review.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }),
+                          text: review.text
+                        }} 
+                      />
+                    ))
+                  ) : (
+                    <p style={{ fontSize: '13px', color: '#A0A0A0' }}>Отзывов пока нет. Будьте первым!</p>
+                  )}
                 </div>
                 
-                {!showAllComments && (
+                {!showAllComments && selectedPointData.reviews && selectedPointData.reviews.length > 3 && (
                   <div className="text-center mb-4 mt-4">
                     <span 
                       style={{ fontSize: '12px', color: '#6BAD86', cursor: 'pointer', fontWeight: '500' }}
                       onClick={() => setShowAllComments(true)}
                     >
-                      Показать все комментарии (4)
+                      Показать все комментарии ({selectedPointData.reviews.length})
                     </span>
                   </div>
                 )}
@@ -1188,11 +1710,7 @@ const MapPage = () => {
                       <button 
                         className="btn flex-grow-1 rounded-pill shadow-sm" 
                         style={{ backgroundColor: '#18442a', color: 'white', fontSize: '13px' }}
-                        onClick={() => {
-                          console.log("Отправка:", newCommentText);
-                          setIsAddingComment(false);
-                          setNewCommentText('');
-                        }}
+                        onClick={submitComment}
                       >
                         Отправить
                       </button>
@@ -1216,7 +1734,8 @@ const MapPage = () => {
                 )}
 
                 <hr style={{ margin: '32px -32px 0 -32px', border: 'none', borderTop: '1px solid #E7EFE8', opacity: 1 }} />
-              
+                
+                {/* ПОДВАЛ ПАНЕЛИ */}
                 {isEditingPoint ? (
                   <div className="pt-4 pb-2">
                     <textarea 
@@ -1235,28 +1754,30 @@ const MapPage = () => {
                       <button 
                         className="btn rounded-pill px-4 py-1"
                         style={{ fontSize: '12px', backgroundColor: '#6BAD86', color: 'white', fontWeight: '600' }}
-                        onClick={() => {
-                          console.log("Исправление отправлено:", editSuggestion);
-                          setIsEditingPoint(false);
-                          setEditSuggestion('');
-                        }}
+                        onClick={submitEditSuggestion}
                       >Отправить</button>
                     </div>
                   </div>
                 ) : (
                   <div className="d-flex justify-content-between align-items-center pt-4 pb-2">
                     <div className="d-flex flex-column gap-2" style={{ fontSize: '12px', color: '#18442A' }}>
-                      <img src="/icons/person.png" alt="Moderator" style={{ width: '12px', height: '12px' }} />
-                      <span style={{ color: '#666' }}>Модератор точки:</span> 
-                      <a href="mailto:kolyakorobov@gmail.com" style={{ color: '#18442A', textDecoration: 'none', fontWeight: 500 }}>kolyakorobov@gmail.com</a>
+                      <div className="d-flex align-items-center gap-2">
+                         <img src="/icons/person.png" alt="Moderator" style={{ width: '12px', height: '12px' }} />
+                         <span style={{ color: '#666' }}>Модератор точки:</span> 
+                      </div>
+                      <a href={`mailto:${selectedPointData.owner_email || 'support@gdesdat.ru'}`} style={{ color: '#18442A', textDecoration: 'none', fontWeight: 500, paddingLeft: '20px' }}>
+                         {selectedPointData.owner_email || 'support@gdesdat.ru'}
+                      </a>
                     </div>
                     <div 
                       className="d-flex flex-column gap-2" 
                       style={{ fontSize: '12px', color: '#6BAD86', cursor: 'pointer', fontWeight: '500' }}
                       onClick={() => setIsEditingPoint(true)}
                     >
-                      <span>Предложить исправление</span>
-                      <img src="/icons/pencil.png" alt="Edit" style={{ width: '12px', height: '12px' }} />
+                      <div className="d-flex align-items-center gap-2">
+                        <span>Предложить исправление</span>
+                        <img src="/icons/pencil.png" alt="Edit" style={{ width: '12px', height: '12px' }} />
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1390,7 +1911,21 @@ const Articles = () => {
 
   // НАВИГАЦИЯ И ВЫБОР СТАТЬИ
   const [currentView, setCurrentView] = useState('feed');
-  const [selectedArticle, setSelectedArticle] = useState(null);
+  
+  // ИНИЦИАЛИЗАЦИЯ ИЗ LOCALSTORAGE
+  const [selectedArticle, setSelectedArticle] = useState(() => {
+    try {
+      const savedArticle = localStorage.getItem('articleToOpen');
+      if (savedArticle) {
+        const parsed = JSON.parse(savedArticle);
+        localStorage.removeItem('articleToOpen'); // Сразу чистим
+        return parsed;
+      }
+    } catch (e) {
+      console.error("Ошибка при чтении статьи из localStorage", e);
+    }
+    return null;
+  });
 
   // ПАГИНАЦИЯ (СЧЕТЧИКИ СТАТЕЙ)
   const [visibleCount, setVisibleCount] = useState(6);
@@ -1642,74 +2177,6 @@ const Articles = () => {
 
   const allArticles = [...mockRecentArticles, ...mockPopularArticles];
 
-  // ФИЛЬТРАЦИЯ СТАТЕЙ ДЛЯ БАЗЫ ЗНАНИЙ ПО ПОИСКУ
-  const filteredKnowledgeArticles = allArticles.filter(article => {
-    if (!searchQuery) return true; // Если поиск пустой, показываем все статьи
-    const lowerQuery = searchQuery.toLowerCase();
-    // Ищем совпадения в заголовке, описании или самом тексте статьи
-    return (
-      article.title.toLowerCase().includes(lowerQuery) ||
-      article.description.toLowerCase().includes(lowerQuery) ||
-      article.content.toLowerCase().includes(lowerQuery)
-    );
-  });
-
-  // КАРТОЧКА СТАТЬИ
-  const renderArticleCard = (article, aspectRatio) => (
-    <div
-      onClick={() => setSelectedArticle(article)} 
-      className="card h-100 d-flex flex-column"
-      style={{
-        borderRadius: '24px',
-        border: '2px solid transparent', 
-        boxShadow: '0 4px 24px rgba(0,0,0,0.04)',
-        overflow: 'hidden',
-        backgroundColor: '#FFFFFF',
-        cursor: 'pointer',
-        transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease' 
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-4px)';
-        e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.08)';
-        e.currentTarget.style.borderColor = '#D0F288'; 
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = '0 4px 24px rgba(0,0,0,0.04)';
-        e.currentTarget.style.borderColor = 'transparent'; 
-      }}
-    >
-      <div style={{ width: '100%', aspectRatio: aspectRatio, backgroundColor: '#e9ecef', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
-        <img src={article.image} alt={article.title} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }} onError={(e) => e.target.style.display = 'none'} />
-        <div
-          className="position-absolute"
-          style={{ bottom: '16px', left: '16px', backgroundColor: getCategoryColor(article.category), color: '#18442A', padding: '6px 16px', borderRadius: '5px', fontSize: '12px', fontFamily: '"Actay", sans-serif', fontWeight: '500', zIndex: 1 }}
-        >
-          {article.category}
-        </div>
-      </div>
-      <div className="card-body p-4 d-flex flex-column" style={{ flexGrow: 1 }}>
-        <h5 style={{ fontFamily: '"Actay Wide", sans-serif', color: '#18442A', fontWeight: '700', marginBottom: '8px', fontSize: '18px', lineHeight: '1.25' }}>
-          {article.title}
-        </h5>
-        <p style={{ fontFamily: '"Actay", sans-serif', color: '#18442A', fontSize: '14px', lineHeight: '1.35', flexGrow: 1, marginBottom: '14px' }}>
-          {article.description}
-        </p>
-        <div className="d-flex justify-content-between align-items-center mt-auto" style={{ fontFamily: '"Actay", sans-serif', color: '#A0A0A0', fontSize: '12px' }}>
-          <span>{article.date}</span>
-          <span className="d-flex align-items-center" style={{ gap: '6px' }}>
-            <img src="/icons/eye.png" alt="views" style={{ width: '16px', height: '16px', objectFit: 'contain', display: 'block' }} />
-            <span style={{ lineHeight: '1', display: 'inline-block' }}>{article.views}</span>
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-
-  const toggleFilter = (id) => {
-    setActiveFilters(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]);
-  };
-
   const wasteCategories = [
     { id: 'plastic', name: 'Пластик', color: '#CDE5FD' },
     { id: 'paper', name: 'Бумага', color: '#FFC8C8' },
@@ -1733,20 +2200,136 @@ const Articles = () => {
     { id: 'other_reduce', name: 'Другое', color: '#D0CAFC' }
   ];
 
-  const getFilterBtnStyle = (cat) => ({
-    padding: '6px 16px',
-    backgroundColor: activeFilters.includes(cat.id) ? cat.color : '#F4F6E3',
-    color: '#18442A',
-    borderRadius: '5px',
-    border: 'none',
-    fontFamily: '"Actay", sans-serif',
-    fontSize: '13px',
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
-    flexGrow: 1,
-    textAlign: 'center',
-    transition: 'background-color 0.2s ease'
+  const toggleFilter = (id) => {
+    setActiveFilters(prev => {
+      const currentFilters = Array.isArray(prev) ? prev : [];
+      if (currentFilters.includes(id)) {
+        return currentFilters.filter(f => f !== id);
+      } else {
+        return [...currentFilters, id];
+      }
+    });
+  };
+
+  const getFilterBtnStyle = (cat) => {
+    const isSelected = Array.isArray(activeFilters) && activeFilters.includes(cat.id);
+    return {
+      padding: '6px 16px',
+      backgroundColor: isSelected ? cat.color : '#F4F6E3',
+      color: '#18442A',
+      borderRadius: '5px',
+      border: 'none',
+      fontFamily: '"Actay", sans-serif',
+      fontSize: '13px',
+      cursor: 'pointer',
+      whiteSpace: 'nowrap',
+      flexGrow: 1,
+      textAlign: 'center',
+      transition: 'background-color 0.2s ease, transform 0.1s ease',
+      transform: isSelected ? 'scale(0.98)' : 'scale(1)'
+    };
+  };
+
+
+  // ФИЛЬТРАЦИЯ СТАТЕЙ ДЛЯ БАЗЫ ЗНАНИЙ ПО ПОИСКУ
+  const filteredKnowledgeArticles = allArticles.filter(article => {
+    
+    // Поиск
+    const matchesSearch = searchQuery === '' || 
+      (article.title && article.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (article.description && article.description.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    if (!matchesSearch) return false;
+
+    // Проверка кнопок фильтров
+    const currentFilters = Array.isArray(activeFilters) ? activeFilters : [];
+    if (currentFilters.length === 0) return true;
+    
+    const activeCategoryNames = currentFilters.map(filterId => {
+      const foundInWaste = wasteCategories.find(c => c.id === filterId);
+      if (foundInWaste) return foundInWaste.name;
+      const foundInReduce = reduceCategories.find(c => c.id === filterId);
+      return foundInReduce ? foundInReduce.name : null;
+    }).filter(Boolean);
+
+    const articleCategoryName = typeof article.category === 'object' && article.category !== null 
+      ? article.category.name 
+      : article.category;
+      
+    const finalCategoryName = articleCategoryName || article.category_name;
+
+    return activeCategoryNames.includes(finalCategoryName);
   });
+
+  // КАРТОЧКА СТАТЬИ
+  const renderArticleCard = (article, aspectRatio) => {
+    // Безопасное получение даты (если с бэка придет created_at, берем его, иначе старую date)
+    let displayDate = article.date;
+    if (article.created_at) {
+      const dateObj = new Date(article.created_at);
+      displayDate = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+    }
+
+    // Безопасное получение просмотров (ищем view_count, views или просто 0)
+    const displayViews = article.view_count !== undefined ? article.view_count : (article.views || 0);
+
+    return (
+      <div
+        onClick={() => setSelectedArticle(article)} 
+        className="card h-100 d-flex flex-column"
+        style={{
+          borderRadius: '24px',
+          border: '2px solid transparent', 
+          boxShadow: '0 4px 24px rgba(0,0,0,0.04)',
+          overflow: 'hidden',
+          backgroundColor: '#FFFFFF',
+          cursor: 'pointer',
+          transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease' 
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-4px)';
+          e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.08)';
+          e.currentTarget.style.borderColor = '#D0F288'; 
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = '0 4px 24px rgba(0,0,0,0.04)';
+          e.currentTarget.style.borderColor = 'transparent'; 
+        }}
+      >
+        <div style={{ width: '100%', aspectRatio: aspectRatio, backgroundColor: '#e9ecef', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
+          <img src={article.image || article.cover_image} alt={article.title} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }} onError={(e) => e.target.style.display = 'none'} />
+          
+          {/* Категория (если есть) */}
+          {(article.category || article.category_name) && (
+            <div
+              className="position-absolute"
+              style={{ bottom: '16px', left: '16px', backgroundColor: getCategoryColor(article.category || article.category_name), color: '#18442A', padding: '6px 16px', borderRadius: '5px', fontSize: '12px', fontFamily: '"Actay", sans-serif', fontWeight: '500', zIndex: 1 }}
+            >
+              {article.category || article.category_name}
+            </div>
+          )}
+        </div>
+        
+        <div className="card-body p-4 d-flex flex-column" style={{ flexGrow: 1 }}>
+          <h5 style={{ fontFamily: '"Actay Wide", sans-serif', color: '#18442A', fontWeight: '700', marginBottom: '8px', fontSize: '18px', lineHeight: '1.25' }}>
+            {article.title}
+          </h5>
+          <p style={{ fontFamily: '"Actay", sans-serif', color: '#18442A', fontSize: '14px', lineHeight: '1.35', flexGrow: 1, marginBottom: '14px' }}>
+            {article.description && article.description.length > 100 ? `${article.description.substring(0, 100)}...` : article.description}
+          </p>
+          
+          <div className="d-flex justify-content-between align-items-center mt-auto" style={{ fontFamily: '"Actay", sans-serif', color: '#A0A0A0', fontSize: '12px' }}>
+            <span>{displayDate}</span>
+            <span className="d-flex align-items-center" style={{ gap: '6px' }}>
+              <img src="/icons/eye.png" alt="views" style={{ width: '16px', height: '16px', objectFit: 'contain', display: 'block' }} />
+              <span style={{ lineHeight: '1', display: 'inline-block' }}>{displayViews}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // ----------------------------------------------------
   // 1. ЕСЛИ ОТКРЫТА СТАТЬЯ
@@ -1786,17 +2369,23 @@ const Articles = () => {
               <div style={{ width: '6px', backgroundColor: '#6BAD86', borderRadius: '6px', flexShrink: 0 }}></div>
               <h3 style={{ fontFamily: '"Actay Wide", sans-serif', fontWeight: '700', fontSize: '24px', margin: 0 }}>{selectedArticle.description}</h3>
             </div>
+            {/* ЗАМЕНИТЕ ЭТУ ЧАСТЬ */}
             <div>
-              {selectedArticle.content.split('\n\n').map((paragraph, index) => {
-                if (paragraph.includes('Основные рекомендации из статьи:')) {
-                  return (
-                    <div key={index} style={{ backgroundColor: '#F4F6E3', padding: '24px', borderRadius: '16px', margin: '24px 0' }}>
-                      {paragraph.split('\n').map((line, i) => <div key={i} style={{ marginBottom: i === 0 ? '12px' : '8px' }}>{line}</div>)}
-                    </div>
-                  )
-                }
-                return <p key={index} style={{ marginBottom: '24px' }}>{paragraph}</p>
-              })}
+              {/* Добавляем проверку: если content есть - рендерим, если нет - пишем заглушку */}
+              {selectedArticle.content ? (
+                selectedArticle.content.split('\n\n').map((paragraph, index) => {
+                  if (paragraph.includes('Основные рекомендации из статьи:')) {
+                    return (
+                      <div key={index} style={{ backgroundColor: '#F4F6E3', padding: '24px', borderRadius: '16px', margin: '24px 0' }}>
+                        {paragraph.split('\n').map((line, i) => <div key={i} style={{ marginBottom: i === 0 ? '12px' : '8px' }}>{line}</div>)}
+                      </div>
+                    )
+                  }
+                  return <p key={index} style={{ marginBottom: '24px' }}>{paragraph}</p>
+                })
+              ) : (
+                <p style={{ marginBottom: '24px' }}>Текст статьи скоро появится...</p>
+              )}
             </div>
           </div>
         </div>
@@ -2429,7 +3018,8 @@ const Profile = ({ currentUser, onLogout }) => {
     city: '',
     phone: '',
     about: '',
-    avatar: null
+    avatar: null,
+    pointsCount: 0
   });
 
   const fileInputRef = useRef(null);
@@ -2464,7 +3054,8 @@ const Profile = ({ currentUser, onLogout }) => {
           city: response.data.city || '',
           phone: response.data.phone || '',
           about: response.data.about || '',
-          avatar: response.data.avatar || null
+          avatar: response.data.avatar || null,
+          pointsCount: response.data.points ? response.data.points.length : 0
         }));
 
       } catch (err) {
@@ -2665,6 +3256,7 @@ const Profile = ({ currentUser, onLogout }) => {
   const [notificationToDelete, setNotificationToDelete] = useState(null);
 
   const [showPublishModal, setShowPublishModal] = useState(false);
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
 
   const markAllAsRead = () => {
     setMockNotifications(prev => prev.map(notif => ({ ...notif, isNew: false })));
@@ -2672,6 +3264,17 @@ const Profile = ({ currentUser, onLogout }) => {
 
   const toggleNotification = (id) => {
     setExpandedNotifId(expandedNotifId === id ? null : id);
+  };
+
+  const confirmDeleteAccount = async () => {
+    try {
+      await authService.deleteAccount();
+      setShowDeleteAccountModal(false);
+      onLogout(); // Вызываем твою готовую функцию (очистит токены и кинет на главную)
+    } catch (error) {
+      console.error("Ошибка при удалении аккаунта:", error);
+      alert("Не удалось удалить аккаунт.");
+    }
   };
 
   return (
@@ -2785,10 +3388,17 @@ const Profile = ({ currentUser, onLogout }) => {
                   {formData.firstName || formData.lastName ? `${formData.firstName} ${formData.lastName}`.trim() : 'Имя Фамилия'}
                 </h5>
                 
-                {/* ИСПРАВЛЕНИЕ 3: Полоса цвета #F4F6E3 и не прилипает к краям (убран margin: '0 -24px') */}
                 <div style={{ borderTop: '2px solid #F4F6E3', marginTop: '16px', paddingTop: '16px' }}>
-                  <h4 style={{ color: '#18442A', margin: 0, fontWeight: '700' }}>6</h4>
-                  <span style={{ fontSize: '13px', color: '#18442A' }}>модерируемых пунктов</span>
+                  <h4 style={{ color: '#18442A', margin: 0, fontWeight: '700' }}>
+                    {formData.pointsCount}
+                  </h4>
+                  <span style={{ fontSize: '13px', color: '#18442A' }}>
+                    {formData.pointsCount % 10 === 1 && formData.pointsCount % 100 !== 11 
+                      ? 'модерируемый пункт' 
+                      : [2, 3, 4].includes(formData.pointsCount % 10) && ![12, 13, 14].includes(formData.pointsCount % 100) 
+                        ? 'модерируемых пункта' 
+                        : 'модерируемых пунктов'}
+                  </span>
                 </div>
               </div>
 
@@ -2875,7 +3485,13 @@ const Profile = ({ currentUser, onLogout }) => {
                 <div className="d-flex align-items-center gap-4">
                   <button onClick={handleSaveProfile} className="btn px-5 py-2" style={{ backgroundColor: '#18442A', color: '#FFFFFF', fontSize: '14px', fontWeight: '500', borderRadius: '8px' }}>Сохранить изменения</button>
                   <span onClick={onLogout} style={{ fontSize: '14px', color: '#18442A', cursor: 'pointer', fontWeight: '500' }}>Выйти</span>
-                  <span className="ms-auto" style={{ fontSize: '13px', color: '#FF8A8A', cursor: 'pointer' }}>Удалить аккаунт</span>
+                  <span 
+                    className="ms-auto" 
+                    style={{ fontSize: '13px', color: '#FF8A8A', cursor: 'pointer' }}
+                    onClick={() => setShowDeleteAccountModal(true)}
+                  >
+                    Удалить аккаунт
+                  </span>
                 </div>
               </div>
 
@@ -2890,6 +3506,73 @@ const Profile = ({ currentUser, onLogout }) => {
             </div>
           </div>
         )}
+        
+      {showDeleteAccountModal && (
+              <div 
+                className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+                style={{ 
+                  backgroundColor: 'rgba(255, 255, 255, 0.4)', 
+                  backdropFilter: 'blur(8px)',                  
+                  WebkitBackdropFilter: 'blur(8px)',            
+                  zIndex: 10000                                 
+                }}
+              >
+                <div 
+                  className="bg-white d-flex flex-column align-items-center text-center" 
+                  style={{ 
+                    width: '640px', 
+                    padding: '48px 40px',
+                    borderRadius: '24px', 
+                    boxShadow: '0px 16px 60px rgba(0, 0, 0, 0.12)', 
+                    border: 'none' 
+                  }}
+                >
+                  {/* Иконка предупреждения */}
+                  <div style={{ width: '72px', height: '72px', backgroundColor: '#FFE5E5', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '24px' }}>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="12" cy="12" r="11" stroke="#FF8A8A" strokeWidth="2"/>
+                      <path d="M12 6V14" stroke="#FF8A8A" strokeWidth="2.5" strokeLinecap="round"/>
+                      <circle cx="12" cy="17.5" r="1.5" fill="#FF8A8A"/>
+                    </svg>
+                  </div>
+
+                  <h2 style={{ margin: '0 0 16px 0', fontSize: '28px', fontWeight: '700', color: '#18442A', fontFamily: '"Actay", sans-serif' }}>
+                    Удалить аккаунт?
+                  </h2>
+
+                  <p style={{ margin: '0 0 40px 0', fontSize: '18px', color: '#18442A', lineHeight: '1.5', whiteSpace: 'nowrap' }}>
+                    Вы уверены, что хотите навсегда удалить свой аккаунт?<br/>
+                    Все ваши данные и модерируемые точки будут потеряны.
+                  </p>
+
+                  <div className="d-flex justify-content-between w-100 align-items-center px-2">
+                    <span 
+                      onClick={() => setShowDeleteAccountModal(false)}
+                      style={{ fontSize: '18px', color: '#18442A', cursor: 'pointer', fontWeight: '400' }}
+                    >
+                      Отмена
+                    </span>
+                    
+                    <button 
+                      className="btn"
+                      onClick={confirmDeleteAccount}
+                      style={{
+                        backgroundColor: '#FF8A8A',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '12px',
+                        padding: '12px 32px',
+                        fontSize: '18px',
+                        fontWeight: '400',
+                        fontFamily: 'inherit'
+                      }}
+                    >
+                      Удалить навсегда
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
         {/* СПИСОК МОДЕРИРУЕМЫХ ТОЧЕК */}
         {activeTab === 'points' && (
@@ -3593,6 +4276,7 @@ const Profile = ({ currentUser, onLogout }) => {
       )}
 
       </div>
+      <Footer />
     </div>
   );
 };
@@ -3612,6 +4296,7 @@ const EditPoint = () => {
           </Link>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
