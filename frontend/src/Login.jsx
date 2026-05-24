@@ -148,7 +148,7 @@ const Login = ({ setCurrentUser }) => {
               <div className="d-flex justify-content-end mb-4">
                 <span 
                   style={{ fontSize: '12px', color: '#18442A', cursor: 'pointer', textDecoration: 'underline' }}
-                  onClick={() => alert("Функция восстановления пароля в разработке")}
+                  onClick={() => alert("Функция восстановления пароля в разработке. Для восстановления пароля обратитесь в службу поддержки: gdesdat@gmail.com")}
                 >
                   Восстановление пароля
                 </span>

@@ -6,11 +6,15 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     
-    # Говорим Django: "Все запросы, начинающиеся с api/, перенаправляй в файл api.urls"
+    # Все наши эндпоинты живут в api/urls.py
     path('api/', include('api.urls')),
-    path('api/auth/', include('djoser.urls')),          # Даст эндпоинт /api/auth/users/ (для регистрации)
+    
+    # Авторизация (Djoser + JWT)
+    path('api/auth/', include('djoser.urls')),
     path('api/auth/', include('djoser.urls.jwt')), 
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
 
+# Раздача медиа-файлов (аватарки, обложки статей)
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

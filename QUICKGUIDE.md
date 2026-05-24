@@ -9,6 +9,7 @@
 * `docker-compose stop` — остановка работы контейнеров.
 * `docker-compose down` — полная остановка и удаление контейнеров.
 * `docker-compose restart backend` — перезапуск только сервера Django (полезно при правке `settings.py`).
+* `docker-compose restart frontend`
 * `docker-compose ps` — просмотр статуса запущенных контейнеров.
 * `docker-compose exec backend pip freeze > requirements.txt`
 
