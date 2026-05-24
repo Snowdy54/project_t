@@ -1,0 +1,13 @@
+# Frontend
+FROM node:22-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install --legacy-peer-deps
+
+COPY . .
+
+# Если Vite, команда "npm run dev".  Вот это у нас
+# Если Create React App — "npm start".
+CMD ["npm", "run", "dev"]
