@@ -7,7 +7,6 @@ import { authService } from './api/services';
 import Login from './Login';
 import Register from './Register'; 
 
-
 const Footer = () => (
   <footer 
     className="w-100 d-flex justify-content-between align-items-center" 
@@ -31,6 +30,13 @@ const Footer = () => (
 const Home = () => {
   // Состояние для открытия/закрытия дополнительного текста "Читать подробнее"
   const [isExpanded, setIsExpanded] = useState(false);
+
+  // ДАННЫЕ ДЛЯ КАРТОЧЕК (Добавил сюда, чтобы не было белого экрана!)
+  const popularArticles = [
+    { id: 5, image: '/article5.jpg', category: 'Новости отрасли', title: 'Проблема батареек: что делать?', description: 'Почему одна пальчиковая батарейка загрязняет 20 квадратных метров почвы.', date: '21 апреля 18:30', views: 2540, author: 'Эко Патруль' },
+    { id: 6, image: '/article6.jpg', category: 'Советы по сортировке', title: 'Куда девать старую электронику?', description: 'Гайд по утилизации старых смартфонов, ноутбуков и бытовой техники.', date: '20 апреля 12:00', views: 2340, author: 'Иван Иванов' },
+    { id: 7, image: '/article7.jpg', category: 'Экопросвещение', title: 'Мифы о биоразлагаемом пластике', description: 'Почему не всё то эко, что так называется, и как не попасться на гринвошинг.', date: '26 апреля 14:00', views: 2548, author: 'Эко Патруль' }
+  ];
 
   return (
     <div className="w-100">
@@ -169,57 +175,50 @@ const Home = () => {
         }}
       >
         <h3 className="mb-4 font-russkin" style={{ fontSize: '2.2rem', color: '#3F3F3F' }}>ПОПУЛЯРНОЕ</h3>
+        
         <div className="row">
-          
-          <div className="col-12 col-lg-4 mb-4">
-            <div className="card h-100 border-0 p-3 d-flex flex-row" style={{ backgroundColor: '#f1f4e9', borderRadius: '20px' }}>
-              <div style={{ width: '35%', borderRadius: '12px', backgroundColor: '#ddd', backgroundImage: 'url("/card1.jpg")', backgroundSize: 'cover', backgroundPosition: 'center', minHeight: '120px' }}></div>
-              <div className="card-body py-1 pe-0 ps-3 d-flex flex-column justify-content-between" style={{ width: '65%' }}>
-                <div>
-                  <h5 className="font-russkin mb-2" style={{ color: '#18442a', fontSize: '1.1rem', lineHeight: '1.2' }}>ШАГ К ЭКОЛОГИИ. СОРТИРОВКА МУСОРА</h5>
-                  <p style={{ fontSize: '0.85rem', color: '#18442a', marginBottom: '0' }}>Правила, инструкции и полезные советы для новичков...</p>
+          {popularArticles.slice(0, 3).map((article) => (
+            <div key={article.id} className="col-12 col-lg-4 mb-4">
+              <div className="card h-100 border-0 p-3 d-flex flex-column" style={{ backgroundColor: '#f1f4e9', borderRadius: '20px' }}>
+                <div 
+                  style={{ 
+                    width: '100%', 
+                    borderRadius: '12px', 
+                    backgroundColor: '#ddd', 
+                    backgroundImage: `url("${article.image}")`, 
+                    backgroundSize: 'cover', 
+                    backgroundPosition: 'center', 
+                    minHeight: '160px' // Высота картинки
+                  }}
+                ></div>
+                
+                <div className="card-body px-0 pt-3 pb-0 d-flex flex-column justify-content-between" style={{ flexGrow: 1 }}>
+                  <div>
+                    <h5 className="font-russkin mb-2" style={{ color: '#18442a', fontSize: '1.1rem', lineHeight: '1.2', textTransform: 'uppercase' }}>
+                      {article.title}
+                    </h5>
+                    <p style={{ fontSize: '0.85rem', color: '#18442a', marginBottom: '0' }}>
+                      {article.description.length > 60 ? `${article.description.substring(0, 60)}...` : article.description}
+                    </p>
+                  </div>
+                  
+                  {/* Кнопка "Читать >" */}
+                  <Link 
+                    to="/articles" 
+                    onClick={() => {
+                      localStorage.setItem('articleToOpen', JSON.stringify(article));
+                    }}
+                    className="btn bg-white rounded-pill align-self-start mt-3 px-3 py-1 shadow-sm text-decoration-none" 
+                    style={{ fontSize: '0.85rem', color: '#18442a', fontWeight: 400 }}
+                  >
+                    Читать &gt;
+                  </Link>
                 </div>
-                {/* Исправлено: Заменили button на Link для перенаправления */}
-                <Link to="/articles" className="btn bg-white rounded-pill align-self-start mt-3 px-3 py-1 shadow-sm text-decoration-none" style={{ fontSize: '0.85rem', color: '#18442a', fontWeight: 400 }}>
-                  Читать &gt;
-                </Link>
               </div>
             </div>
-          </div>
-
-          <div className="col-12 col-lg-4 mb-4">
-            <div className="card h-100 border-0 p-3 d-flex flex-row" style={{ backgroundColor: '#f1f4e9', borderRadius: '20px' }}>
-              <div style={{ width: '35%', borderRadius: '12px', backgroundColor: '#ddd', backgroundImage: 'url("/card2.jpg")', backgroundSize: 'cover', backgroundPosition: 'center', minHeight: '120px' }}></div>
-              <div className="card-body py-1 pe-0 ps-3 d-flex flex-column justify-content-between" style={{ width: '65%' }}>
-                <div>
-                  <h5 className="font-russkin mb-2" style={{ color: '#18442a', fontSize: '1.1rem', lineHeight: '1.2' }}>КАК МОЯ СЕМЬЯ ОРГАНИЗОВАЛА РАЗДЕЛЬНЫЙ СБОР ОТХОДОВ</h5>
-                  <p style={{ fontSize: '0.85rem', color: '#18442a', marginBottom: '0' }}>Как организовать сбор в квартире, научиться сортировать...</p>
-                </div>
-                {/* Исправлено: Заменили button на Link для перенаправления */}
-                <Link to="/articles" className="btn bg-white rounded-pill align-self-start mt-3 px-3 py-1 shadow-sm text-decoration-none" style={{ fontSize: '0.85rem', color: '#18442a', fontWeight: 400 }}>
-                  Слушать подкаст &gt;
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          <div className="col-12 col-lg-4 mb-4">
-            <div className="card h-100 border-0 p-3 d-flex flex-row" style={{ backgroundColor: '#f1f4e9', borderRadius: '20px' }}>
-              <div style={{ width: '35%', borderRadius: '12px', backgroundColor: '#ddd', backgroundImage: 'url("/card3.jpg")', backgroundSize: 'cover', backgroundPosition: 'center', minHeight: '120px' }}></div>
-              <div className="card-body py-1 pe-0 ps-3 d-flex flex-column justify-content-between" style={{ width: '65%' }}>
-                <div>
-                  <h5 className="font-russkin mb-2" style={{ color: '#18442a', fontSize: '1.1rem', lineHeight: '1.2' }}>ВОЛНЫ ПОДНИМАЮТ ВОПРОСЫ</h5>
-                  <p style={{ fontSize: '0.85rem', color: '#18442a', marginBottom: '0' }}>Эксперимент с рекультивацией загрязненных пляжей...</p>
-                </div>
-                {/* Исправлено: Заменили button на Link для перенаправления */}
-                <Link to="/articles" className="btn bg-white rounded-pill align-self-start mt-3 px-3 py-1 shadow-sm text-decoration-none" style={{ fontSize: '0.85rem', color: '#18442a', fontWeight: 400 }}>
-                  Читать &gt;
-                </Link>
-              </div>
-            </div>
-          </div>
-
+          ))}
         </div>
+
         {/* ИСПРАВЛЕННЫЙ ХОВЕР С ПЛАВНОЙ СТРЕЛОЧКОЙ */}
         <style>
           {`
@@ -1045,6 +1044,56 @@ const MapPage = () => {
     }
   };
 
+  // --- ДАННЫЕ ДЛЯ АКЦИЙ ---
+const [expandedPromos, setExpandedPromos] = useState([]);
+const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
+const [cityQuery, setCityQuery] = useState(''); // <-- СОСТОЯНИЕ ВВОДА ТЕКСТА
+
+const togglePromo = (id) => {
+    setExpandedPromos(prev => prev.includes(id) ? prev.filter(pId => pId !== id) : [...prev, id]);
+};
+
+const cities = ["Москва", "Санкт-Петербург", "Екатеринбург", "Новосибирск", "Казань", "Нижний Новгород", "Челябинск"];
+
+const promoItems = [
+    {
+        id: 1,
+        title: "Умная переработка",
+        address: "г. Екатеринбург, улица Готвальда, 24/4",
+        city: "Екатеринбург", // <-- ВАЖНО: ДОБАВЛЕН ГОРОД!
+        date: "24 апреля",
+        description: "Сбор старых батареек и аккумуляторов. Один человек может сдать до 2 кг за раз по спец.цене. Все собранное отправится на переработку в Челябинск.",
+        isLong: true
+    },
+    {
+        id: 2,
+        title: "Умная переработка",
+        address: "г. Екатеринбург, улица Готвальда, 24/4",
+        city: "Екатеринбург", // <-- ВАЖНО: ДОБАВЛЕН ГОРОД!
+        date: "24 апреля",
+        description: "Сбор старых батареек и аккумуляторов. Один человек может сдать до 2 кг за раз по спец.цене. Все собранное отправится на переработку в Челябинск. Приносите более 5 кг пластика и получайте купон на зерновой кофе у наших партнеров. Акция действует до конца недели.",
+        isLong: true
+    },
+    {
+        id: 3,
+        title: "Вторая жизнь вещам",
+        address: "г. Москва, проспект Мира, 119",
+        city: "Москва", // <-- ВАЖНО: ДОБАВЛЕН ГОРОД!
+        date: "1 мая",
+        description: "Принимаем старую одежду в хорошем состоянии. Первым 50 участникам выдаем эко-сумку в подарок.",
+        isLong: false
+    }
+];
+
+// Фильтруем города для выпадающего списка
+const filteredCities = cities.filter(city => city.toLowerCase().includes(cityQuery.toLowerCase()));
+
+// Фильтруем акции безопасно (с проверкой, что promo.city существует)
+const filteredPromos = cityQuery 
+    ? promoItems.filter(promo => promo.city && promo.city.toLowerCase().includes(cityQuery.toLowerCase()))
+    : promoItems;
+  // ------------------------
+
   return (
     <div className="d-flex flex-column" style={{ height: 'calc(100vh - 80px)', backgroundColor: '#f1f4e9' }}>
       <div className="d-flex flex-grow-1" style={{ borderTop: '1px solid #E7EFE8', overflow: 'hidden' }}>
@@ -1227,6 +1276,206 @@ const MapPage = () => {
                   </div>
                 ))
               )}
+            </div>
+            {/* Разделительная линия между пунктами и акциями */}
+                        <hr style={{ margin: '0 -32px 24px -32px', border: 'none', borderTop: '1px solid #EDEDED', opacity: 1 }} />
+
+                        {/* Блок АКЦИИ */}
+                        <div className="mb-4">
+                            <h4 className="font-russkin" style={{ color: '#18442A', fontSize: '37px', textTransform: 'uppercase', marginLeft: '8px', marginBottom: '16px' }}>
+                                Акции
+                            </h4>
+                
+                {/* Поисковая строка с вводом */}
+                <div className="position-relative mb-4 px-2" style={{ fontFamily: 'Actay, sans-serif' }}>
+                    <div className="position-relative" style={{ zIndex: isCityDropdownOpen ? 1002 : 1 }}>
+                        <input 
+                            type="text" 
+                            className="form-control shadow-none" 
+                            placeholder="Введите город..." 
+                            value={cityQuery}
+                            onChange={(e) => {
+                                setCityQuery(e.target.value);
+                                setIsCityDropdownOpen(true);
+                            }}
+                            onClick={() => setIsCityDropdownOpen(true)}
+                            style={{ 
+                                borderRadius: '8px', 
+                                border: '1px solid #18442A', 
+                                fontSize: '14px',
+                                padding: '10px 16px',
+                                paddingRight: '36px',
+                                fontFamily: 'Actay, sans-serif',
+                                height: '42px',
+                                color: '#18442A'
+                            }} 
+                        />
+                        <i className={`bi bi-chevron-${isCityDropdownOpen ? 'up' : 'down'}`}
+                            onClick={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
+                            style={{ 
+                                position: 'absolute',
+                                right: '16px', 
+                                top: '50%', 
+                                transform: 'translateY(-50%)', 
+                                color: '#18442A',
+                                fontSize: '14px',
+                                cursor: 'pointer',
+                                lineHeight: 0
+                            }}>
+                        </i>
+                    </div>
+
+                    {/* Выпадающий список городов */}
+                    {isCityDropdownOpen && (
+                        <>
+                            <div 
+                                style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000 }} 
+                                onClick={() => setIsCityDropdownOpen(false)}
+                            />
+                            <div className="position-absolute shadow" style={{ 
+                                zIndex: 1001,
+                                backgroundColor: '#fff', 
+                                borderRadius: '8px', 
+                                border: '1px solid #E7EFE8',
+                                maxHeight: '200px',
+                                overflowY: 'auto',
+                                top: '46px', 
+                                left: '8px', 
+                                width: 'calc(100% - 16px)'
+                            }}>
+                                {filteredCities.length === 0 ? (
+                                    <div className="py-2 px-3 text-muted" style={{ fontSize: '13px' }}>Совпадений не найдено</div>
+                                ) : (
+                                    <>
+                                        <div 
+                                            onClick={() => { setCityQuery(''); setIsCityDropdownOpen(false); }}
+                                            className="py-2 px-3"
+                                            style={{ cursor: 'pointer', fontSize: '13px', color: '#A0A0A0', borderBottom: '1px solid #E7EFE8' }}
+                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F4F6E3'}
+                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                        >
+                                            Все города
+                                        </div>
+                                        {filteredCities.map((city, idx) => (
+                                            <div 
+                                                key={idx}
+                                                onClick={() => { setCityQuery(city); setIsCityDropdownOpen(false); }}
+                                                className="py-2 px-3"
+                                                style={{ 
+                                                    cursor: 'pointer', 
+                                                    fontSize: '14px', 
+                                                    color: cityQuery === city ? '#6BAD86' : '#18442A',
+                                                    fontWeight: cityQuery === city ? '600' : '400'
+                                                }}
+                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F4F6E3'}
+                                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                            >
+                                                {city}
+                                            </div>
+                                        ))}
+                                    </>
+                                )}
+                            </div>
+                        </>
+                    )}
+                </div>
+
+                {/* Список карточек акций */}
+                <div className="d-flex flex-column gap-3 px-2 pb-4">
+                    {filteredPromos.length === 0 ? (
+                        <p className="text-center mt-2 mb-4" style={{ fontSize: '13px', color: '#A0A0A0', fontFamily: 'Actay, sans-serif' }}>
+                            В выбранном городе пока нет акций
+                        </p>
+                    ) : (
+                        filteredPromos.map((promo) => {
+                            const isExpanded = expandedPromos.includes(promo.id);
+                            return (
+                                <div key={promo.id} className="d-flex flex-column" style={{ 
+                                    border: '1px solid #BDE3C3', 
+                                    boxShadow: '0 0 15px rgba(189, 227, 195, 0.4)',
+                                    borderRadius: '16px', 
+                                    overflow: 'hidden',
+                                    backgroundColor: '#ffffff'
+                                }}>
+                                    <div className="p-3 pb-2">
+                                        <div className="d-flex justify-content-between align-items-start mb-1">
+                                            <h6 className="mb-0" style={{ color: '#18442A', fontSize: '18px', fontFamily: 'Actay Wide, sans-serif' }}>
+                                                {promo.title}
+                                            </h6>
+                                            <span style={{ 
+                                                backgroundColor: '#F4F6E3', 
+                                                color: '#939393', 
+                                                fontSize: '11px', 
+                                                padding: '4px 10px', 
+                                                borderRadius: '6px', 
+                                                whiteSpace: 'nowrap',
+                                                fontFamily: 'Actay, sans-serif'
+                                            }}>
+                                                {promo.date}
+                                            </span>
+                                        </div>
+                                        <p className="mb-2" style={{ fontSize: '12px', color: '#A0A0A0', fontFamily: 'Actay, sans-serif' }}>
+                                            {promo.address}
+                                        </p>
+                                        <p className="mb-0" style={{ 
+                                            fontSize: '13px', 
+                                            color: '#18442A', 
+                                            lineHeight: '1.4',
+                                            display: '-webkit-box',
+                                            WebkitLineClamp: isExpanded ? 'unset' : '3',
+                                            WebkitBoxOrient: 'vertical',
+                                            overflow: 'hidden',
+                                            fontFamily: 'Actay, sans-serif' 
+                                        }}>
+                                            {promo.description}
+                                        </p>
+                                        {promo.isLong && (
+                                            <span 
+                                                onClick={() => togglePromo(promo.id)}
+                                                style={{ 
+                                                    fontSize: '13px', 
+                                                    color: '#18442A', 
+                                                    textDecoration: 'underline', 
+                                                    cursor: 'pointer',
+                                                    fontFamily: 'Actay Wide, sans-serif',
+                                                    display: 'inline-block',
+                                                    marginTop: '6px'
+                                                }}
+                                            >
+                                                {isExpanded ? 'Свернуть' : 'Развернуть'}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div 
+                                        className="w-100 py-2 d-flex justify-content-center align-items-center" 
+                                        style={{ 
+                                            backgroundColor: '#F4F6E3', 
+                                            cursor: 'pointer',
+                                            transition: 'background-color 0.2s ease',
+                                            marginTop: '8px'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#EBEDDD'}
+                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#F4F6E3'}
+                                    >
+                                        <span style={{ 
+                                            color: '#6BAD86', 
+                                            fontSize: '13px', 
+                                            fontFamily: 'Actay Wide, sans-serif', 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            gap: '8px' 
+                                        }}>
+                                            Нажмите для перехода к карточке
+                                            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M7.50008 4.99995C7.49805 4.78074 7.40973 4.57115 7.25425 4.41661L5.46675 2.62495C5.38868 2.54734 5.28308 2.50378 5.173 2.50378C5.06292 2.50378 4.95732 2.54734 4.87925 2.62495C4.84019 2.66368 4.8092 2.70977 4.78804 2.76054C4.76689 2.81132 4.756 2.86578 4.756 2.92078C4.756 2.97579 4.76689 3.03025 4.78804 3.08102C4.8092 3.1318 4.84019 3.17788 4.87925 3.21661L6.25008 4.58328H2.08341C1.97291 4.58328 1.86693 4.62718 1.78879 4.70532C1.71065 4.78346 1.66675 4.88944 1.66675 4.99995C1.66675 5.11045 1.71065 5.21643 1.78879 5.29457C1.86693 5.37271 1.97291 5.41661 2.08341 5.41661H6.25008L4.87925 6.78744C4.80079 6.86535 4.75649 6.97123 4.7561 7.0818C4.75571 7.19237 4.79926 7.29857 4.87716 7.37703C4.95507 7.45549 5.06096 7.49978 5.17153 7.50017C5.28209 7.50057 5.38829 7.45702 5.46675 7.37911L7.25425 5.58744C7.41074 5.43188 7.49915 5.2206 7.50008 4.99995Z" fill="#6BAD86"/>
+                                            </svg>
+                                        </span>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
             </div>
           </div>
         )}
@@ -1662,7 +1911,21 @@ const Articles = () => {
 
   // НАВИГАЦИЯ И ВЫБОР СТАТЬИ
   const [currentView, setCurrentView] = useState('feed');
-  const [selectedArticle, setSelectedArticle] = useState(null);
+  
+  // ИНИЦИАЛИЗАЦИЯ ИЗ LOCALSTORAGE
+  const [selectedArticle, setSelectedArticle] = useState(() => {
+    try {
+      const savedArticle = localStorage.getItem('articleToOpen');
+      if (savedArticle) {
+        const parsed = JSON.parse(savedArticle);
+        localStorage.removeItem('articleToOpen'); // Сразу чистим
+        return parsed;
+      }
+    } catch (e) {
+      console.error("Ошибка при чтении статьи из localStorage", e);
+    }
+    return null;
+  });
 
   // ПАГИНАЦИЯ (СЧЕТЧИКИ СТАТЕЙ)
   const [visibleCount, setVisibleCount] = useState(6);
@@ -1914,74 +2177,6 @@ const Articles = () => {
 
   const allArticles = [...mockRecentArticles, ...mockPopularArticles];
 
-  // ФИЛЬТРАЦИЯ СТАТЕЙ ДЛЯ БАЗЫ ЗНАНИЙ ПО ПОИСКУ
-  const filteredKnowledgeArticles = allArticles.filter(article => {
-    if (!searchQuery) return true; // Если поиск пустой, показываем все статьи
-    const lowerQuery = searchQuery.toLowerCase();
-    // Ищем совпадения в заголовке, описании или самом тексте статьи
-    return (
-      article.title.toLowerCase().includes(lowerQuery) ||
-      article.description.toLowerCase().includes(lowerQuery) ||
-      article.content.toLowerCase().includes(lowerQuery)
-    );
-  });
-
-  // КАРТОЧКА СТАТЬИ
-  const renderArticleCard = (article, aspectRatio) => (
-    <div
-      onClick={() => setSelectedArticle(article)} 
-      className="card h-100 d-flex flex-column"
-      style={{
-        borderRadius: '24px',
-        border: '2px solid transparent', 
-        boxShadow: '0 4px 24px rgba(0,0,0,0.04)',
-        overflow: 'hidden',
-        backgroundColor: '#FFFFFF',
-        cursor: 'pointer',
-        transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease' 
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-4px)';
-        e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.08)';
-        e.currentTarget.style.borderColor = '#D0F288'; 
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = '0 4px 24px rgba(0,0,0,0.04)';
-        e.currentTarget.style.borderColor = 'transparent'; 
-      }}
-    >
-      <div style={{ width: '100%', aspectRatio: aspectRatio, backgroundColor: '#e9ecef', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
-        <img src={article.image} alt={article.title} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }} onError={(e) => e.target.style.display = 'none'} />
-        <div
-          className="position-absolute"
-          style={{ bottom: '16px', left: '16px', backgroundColor: getCategoryColor(article.category), color: '#18442A', padding: '6px 16px', borderRadius: '5px', fontSize: '12px', fontFamily: '"Actay", sans-serif', fontWeight: '500', zIndex: 1 }}
-        >
-          {article.category}
-        </div>
-      </div>
-      <div className="card-body p-4 d-flex flex-column" style={{ flexGrow: 1 }}>
-        <h5 style={{ fontFamily: '"Actay Wide", sans-serif', color: '#18442A', fontWeight: '700', marginBottom: '8px', fontSize: '18px', lineHeight: '1.25' }}>
-          {article.title}
-        </h5>
-        <p style={{ fontFamily: '"Actay", sans-serif', color: '#18442A', fontSize: '14px', lineHeight: '1.35', flexGrow: 1, marginBottom: '14px' }}>
-          {article.description}
-        </p>
-        <div className="d-flex justify-content-between align-items-center mt-auto" style={{ fontFamily: '"Actay", sans-serif', color: '#A0A0A0', fontSize: '12px' }}>
-          <span>{article.date}</span>
-          <span className="d-flex align-items-center" style={{ gap: '6px' }}>
-            <img src="/icons/eye.png" alt="views" style={{ width: '16px', height: '16px', objectFit: 'contain', display: 'block' }} />
-            <span style={{ lineHeight: '1', display: 'inline-block' }}>{article.views}</span>
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-
-  const toggleFilter = (id) => {
-    setActiveFilters(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]);
-  };
-
   const wasteCategories = [
     { id: 'plastic', name: 'Пластик', color: '#CDE5FD' },
     { id: 'paper', name: 'Бумага', color: '#FFC8C8' },
@@ -2005,20 +2200,136 @@ const Articles = () => {
     { id: 'other_reduce', name: 'Другое', color: '#D0CAFC' }
   ];
 
-  const getFilterBtnStyle = (cat) => ({
-    padding: '6px 16px',
-    backgroundColor: activeFilters.includes(cat.id) ? cat.color : '#F4F6E3',
-    color: '#18442A',
-    borderRadius: '5px',
-    border: 'none',
-    fontFamily: '"Actay", sans-serif',
-    fontSize: '13px',
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
-    flexGrow: 1,
-    textAlign: 'center',
-    transition: 'background-color 0.2s ease'
+  const toggleFilter = (id) => {
+    setActiveFilters(prev => {
+      const currentFilters = Array.isArray(prev) ? prev : [];
+      if (currentFilters.includes(id)) {
+        return currentFilters.filter(f => f !== id);
+      } else {
+        return [...currentFilters, id];
+      }
+    });
+  };
+
+  const getFilterBtnStyle = (cat) => {
+    const isSelected = Array.isArray(activeFilters) && activeFilters.includes(cat.id);
+    return {
+      padding: '6px 16px',
+      backgroundColor: isSelected ? cat.color : '#F4F6E3',
+      color: '#18442A',
+      borderRadius: '5px',
+      border: 'none',
+      fontFamily: '"Actay", sans-serif',
+      fontSize: '13px',
+      cursor: 'pointer',
+      whiteSpace: 'nowrap',
+      flexGrow: 1,
+      textAlign: 'center',
+      transition: 'background-color 0.2s ease, transform 0.1s ease',
+      transform: isSelected ? 'scale(0.98)' : 'scale(1)'
+    };
+  };
+
+
+  // ФИЛЬТРАЦИЯ СТАТЕЙ ДЛЯ БАЗЫ ЗНАНИЙ ПО ПОИСКУ
+  const filteredKnowledgeArticles = allArticles.filter(article => {
+    
+    // Поиск
+    const matchesSearch = searchQuery === '' || 
+      (article.title && article.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (article.description && article.description.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    if (!matchesSearch) return false;
+
+    // Проверка кнопок фильтров
+    const currentFilters = Array.isArray(activeFilters) ? activeFilters : [];
+    if (currentFilters.length === 0) return true;
+    
+    const activeCategoryNames = currentFilters.map(filterId => {
+      const foundInWaste = wasteCategories.find(c => c.id === filterId);
+      if (foundInWaste) return foundInWaste.name;
+      const foundInReduce = reduceCategories.find(c => c.id === filterId);
+      return foundInReduce ? foundInReduce.name : null;
+    }).filter(Boolean);
+
+    const articleCategoryName = typeof article.category === 'object' && article.category !== null 
+      ? article.category.name 
+      : article.category;
+      
+    const finalCategoryName = articleCategoryName || article.category_name;
+
+    return activeCategoryNames.includes(finalCategoryName);
   });
+
+  // КАРТОЧКА СТАТЬИ
+  const renderArticleCard = (article, aspectRatio) => {
+    // Безопасное получение даты (если с бэка придет created_at, берем его, иначе старую date)
+    let displayDate = article.date;
+    if (article.created_at) {
+      const dateObj = new Date(article.created_at);
+      displayDate = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+    }
+
+    // Безопасное получение просмотров (ищем view_count, views или просто 0)
+    const displayViews = article.view_count !== undefined ? article.view_count : (article.views || 0);
+
+    return (
+      <div
+        onClick={() => setSelectedArticle(article)} 
+        className="card h-100 d-flex flex-column"
+        style={{
+          borderRadius: '24px',
+          border: '2px solid transparent', 
+          boxShadow: '0 4px 24px rgba(0,0,0,0.04)',
+          overflow: 'hidden',
+          backgroundColor: '#FFFFFF',
+          cursor: 'pointer',
+          transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease' 
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-4px)';
+          e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.08)';
+          e.currentTarget.style.borderColor = '#D0F288'; 
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = '0 4px 24px rgba(0,0,0,0.04)';
+          e.currentTarget.style.borderColor = 'transparent'; 
+        }}
+      >
+        <div style={{ width: '100%', aspectRatio: aspectRatio, backgroundColor: '#e9ecef', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
+          <img src={article.image || article.cover_image} alt={article.title} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }} onError={(e) => e.target.style.display = 'none'} />
+          
+          {/* Категория (если есть) */}
+          {(article.category || article.category_name) && (
+            <div
+              className="position-absolute"
+              style={{ bottom: '16px', left: '16px', backgroundColor: getCategoryColor(article.category || article.category_name), color: '#18442A', padding: '6px 16px', borderRadius: '5px', fontSize: '12px', fontFamily: '"Actay", sans-serif', fontWeight: '500', zIndex: 1 }}
+            >
+              {article.category || article.category_name}
+            </div>
+          )}
+        </div>
+        
+        <div className="card-body p-4 d-flex flex-column" style={{ flexGrow: 1 }}>
+          <h5 style={{ fontFamily: '"Actay Wide", sans-serif', color: '#18442A', fontWeight: '700', marginBottom: '8px', fontSize: '18px', lineHeight: '1.25' }}>
+            {article.title}
+          </h5>
+          <p style={{ fontFamily: '"Actay", sans-serif', color: '#18442A', fontSize: '14px', lineHeight: '1.35', flexGrow: 1, marginBottom: '14px' }}>
+            {article.description && article.description.length > 100 ? `${article.description.substring(0, 100)}...` : article.description}
+          </p>
+          
+          <div className="d-flex justify-content-between align-items-center mt-auto" style={{ fontFamily: '"Actay", sans-serif', color: '#A0A0A0', fontSize: '12px' }}>
+            <span>{displayDate}</span>
+            <span className="d-flex align-items-center" style={{ gap: '6px' }}>
+              <img src="/icons/eye.png" alt="views" style={{ width: '16px', height: '16px', objectFit: 'contain', display: 'block' }} />
+              <span style={{ lineHeight: '1', display: 'inline-block' }}>{displayViews}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // ----------------------------------------------------
   // 1. ЕСЛИ ОТКРЫТА СТАТЬЯ
@@ -2058,17 +2369,23 @@ const Articles = () => {
               <div style={{ width: '6px', backgroundColor: '#6BAD86', borderRadius: '6px', flexShrink: 0 }}></div>
               <h3 style={{ fontFamily: '"Actay Wide", sans-serif', fontWeight: '700', fontSize: '24px', margin: 0 }}>{selectedArticle.description}</h3>
             </div>
+            {/* ЗАМЕНИТЕ ЭТУ ЧАСТЬ */}
             <div>
-              {selectedArticle.content.split('\n\n').map((paragraph, index) => {
-                if (paragraph.includes('Основные рекомендации из статьи:')) {
-                  return (
-                    <div key={index} style={{ backgroundColor: '#F4F6E3', padding: '24px', borderRadius: '16px', margin: '24px 0' }}>
-                      {paragraph.split('\n').map((line, i) => <div key={i} style={{ marginBottom: i === 0 ? '12px' : '8px' }}>{line}</div>)}
-                    </div>
-                  )
-                }
-                return <p key={index} style={{ marginBottom: '24px' }}>{paragraph}</p>
-              })}
+              {/* Добавляем проверку: если content есть - рендерим, если нет - пишем заглушку */}
+              {selectedArticle.content ? (
+                selectedArticle.content.split('\n\n').map((paragraph, index) => {
+                  if (paragraph.includes('Основные рекомендации из статьи:')) {
+                    return (
+                      <div key={index} style={{ backgroundColor: '#F4F6E3', padding: '24px', borderRadius: '16px', margin: '24px 0' }}>
+                        {paragraph.split('\n').map((line, i) => <div key={i} style={{ marginBottom: i === 0 ? '12px' : '8px' }}>{line}</div>)}
+                      </div>
+                    )
+                  }
+                  return <p key={index} style={{ marginBottom: '24px' }}>{paragraph}</p>
+                })
+              ) : (
+                <p style={{ marginBottom: '24px' }}>Текст статьи скоро появится...</p>
+              )}
             </div>
           </div>
         </div>
