@@ -23,7 +23,7 @@ const Login = ({ setCurrentUser }) => {
     try {
       console.log('Попытка входа с данными:', formData);
       
-      const response = await axios.post('http://127.0.0.1:8000/api/token/', {
+      const response = await axios.post('http://193.233.201.124:8000/api/token/', {
         username: formData.email.split('@')[0], 
         password: formData.password
       });

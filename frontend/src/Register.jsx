@@ -31,7 +31,7 @@ const Register = () => {
       console.log('Попытка регистрации с данными:', formData);
       
       // Отправляем данные на бэкенд
-      const response = await axios.post('http://127.0.0.1:8000/api/register/', {
+      const response = await axios.post('http://193.233.201.124:8000/api/register/', {
         username: formData.email.split('@')[0], // Генерируем username из email (до @), т.к. Django требует username
         email: formData.email,
         password: formData.password,

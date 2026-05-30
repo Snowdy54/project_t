@@ -485,7 +485,7 @@ const handleSubmit = async (e) => {
 
     try {
       await axios.post(
-        'http://127.0.0.1:8000/api/points/', 
+        'http://193.233.201.124:8000/api/points/', 
         payload, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -773,7 +773,7 @@ const MapPage = () => {
     try {
       // 3. ИСПРАВЛЕНИЕ: Добавили слеш в конце URL /reaction/
       const response = await axios.post(
-        `http://127.0.0.1:8000/api/points/${selectedPointData.id}/reaction/`,
+        `http://193.233.201.124:8000/api/points/${selectedPointData.id}/reaction/`,
         { reaction: type },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -835,7 +835,7 @@ const MapPage = () => {
     try {
       // Отправляем текст на наш новый эндпоинт
       const response = await axios.post(
-        `http://127.0.0.1:8000/api/points/${selectedPointData.id}/add_review/`,
+        `http://193.233.201.124:8000/api/points/${selectedPointData.id}/add_review/`,
         { text: newCommentText, rating: 5 }, // Отправляем текст и дефолтную оценку
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -922,7 +922,7 @@ const MapPage = () => {
       : {};
 
     // 3. Используем axios вместо обычного fetch для единообразия
-    axios.get('http://127.0.0.1:8000/api/points/', config)
+    axios.get('http://193.233.201.124:8000/api/points/', config)
       .then(res => { 
         console.log("✅ Данные точек загружены с учетом авторизации:", res.data[0]);
         setPoints(res.data); 
@@ -995,7 +995,7 @@ const MapPage = () => {
 
     try {
       await axios.post(
-        `http://127.0.0.1:8000/api/points/${selectedPointData.id}/suggest_edit/`,
+        `http://193.233.201.124:8000/api/points/${selectedPointData.id}/suggest_edit/`,
         { text: editSuggestion },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -2721,7 +2721,7 @@ const Profile = ({ currentUser, onLogout }) => {
       }
 
       try {
-        const response = await axios.get('http://127.0.0.1:8000/api/profile/', {
+        const response = await axios.get('http://193.233.201.124:8000/api/profile/', {
           headers: {
             Authorization: `Bearer ${token}` 
           }
@@ -3032,7 +3032,7 @@ const Profile = ({ currentUser, onLogout }) => {
                   {/* ЕСЛИ ЕСТЬ АВАТАР - ПОКАЗЫВАЕМ ЕГО, ИНАЧЕ - СМАЙЛИК */}
                   {formData.avatar ? (
                     <img 
-                      src={formData.avatar.startsWith('http') ? formData.avatar : `http://127.0.0.1:8000${formData.avatar}`} 
+                      src={formData.avatar.startsWith('http') ? formData.avatar : `http://193.233.201.124:8000${formData.avatar}`} 
                       alt="avatar" 
                       style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} 
                     />
