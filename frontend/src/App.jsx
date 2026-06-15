@@ -484,8 +484,9 @@ const handleSubmit = async (e) => {
     };
 
     try {
+      const apiHost = window.location.hostname; // Определяем хост динамически
       await axios.post(
-        'http://193.233.201.124:8000/api/points/', 
+        `http://${apiHost}:8000/api/points/`, 
         payload, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -772,8 +773,9 @@ const MapPage = () => {
 
     try {
       // 3. ИСПРАВЛЕНИЕ: Добавили слеш в конце URL /reaction/
+      const apiHost = window.location.hostname; // Сюда
       const response = await axios.post(
-        `http://193.233.201.124:8000/api/points/${selectedPointData.id}/reaction/`,
+        `http://${apiHost}:8000/api/points/${selectedPointData.id}/reaction/`,
         { reaction: type },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -834,9 +836,10 @@ const MapPage = () => {
 
     try {
       // Отправляем текст на наш новый эндпоинт
+      const apiHost = window.location.hostname; // Сюда
       const response = await axios.post(
-        `http://193.233.201.124:8000/api/points/${selectedPointData.id}/add_review/`,
-        { text: newCommentText, rating: 5 }, // Отправляем текст и дефолтную оценку
+        `http://${apiHost}:8000/api/points/${selectedPointData.id}/add_review/`,
+        { text: newCommentText, rating: 5 }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -922,7 +925,8 @@ const MapPage = () => {
       : {};
 
     // 3. Используем axios вместо обычного fetch для единообразия
-    axios.get('http://193.233.201.124:8000/api/points/', config)
+    const apiHost = window.location.hostname; // Сюда
+    axios.get(`http://${apiHost}:8000/api/points/`, config)
       .then(res => { 
         console.log("✅ Данные точек загружены с учетом авторизации:", res.data[0]);
         setPoints(res.data); 
@@ -994,8 +998,9 @@ const MapPage = () => {
     }
 
     try {
+      const apiHost = window.location.hostname; // Сюда
       await axios.post(
-        `http://193.233.201.124:8000/api/points/${selectedPointData.id}/suggest_edit/`,
+        `http://${apiHost}:8000/api/points/${selectedPointData.id}/suggest_edit/`,
         { text: editSuggestion },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -1655,10 +1660,16 @@ const MapPage = () => {
 // ----------------------------------------------------
 // Компонент Статьи и база знаний
 // ----------------------------------------------------
-const Articles = () => {
+const Articles = ({ currentUser }) => {
   // РОЛЬ И УВЕДОМЛЕНИЯ
   const [userRole, setUserRole] = useState('Читатель');
   const [notification, setNotification] = useState({ show: false, message: '' });
+
+  useEffect(() => {
+    if (currentUser) {
+      setUserRole(currentUser.is_author ? 'Автор статей' : 'Читатель');
+    }
+  }, [currentUser]);
 
   // НАВИГАЦИЯ И ВЫБОР СТАТЬИ
   const [currentView, setCurrentView] = useState('feed');
@@ -1673,8 +1684,43 @@ const Articles = () => {
   const [searchQuery, setSearchQuery] = useState(''); 
   const [activeFilters, setActiveFilters] = useState([]);
 
+  // ЖИВЫЕ СТАТЬИ ИЗ БЭКЕНДА
+  const [dbArticles, setArticles] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const apiHost = window.location.hostname;
+    axios.get(`http://${apiHost}:8000/api/articles/`)
+      .then(res => {
+        const mappedArticles = res.data.map(item => ({
+          id: item.id,
+          image: item.cover_image || 'https://via.placeholder.com/620x276?text=Экология',
+          category: item.category_name || 'Советы по сортировке',
+          title: item.title,
+          description: item.summary, 
+          date: item.published_at ? new Date(item.published_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }) : 'Недавно',
+          views: item.views_count || 0,
+          content: item.content || '',
+          author: item.author_name || 'Аноним' // <-- ДОБАВЬ ЭТУ СТРОЧКУ!
+        }));
+        setArticles(mappedArticles);
+        setIsLoading(false);
+      })
+      .catch(err => {
+        console.error("Ошибка загрузки статей:", err);
+        setIsLoading(false);
+      });
+  }, [currentView]);
+
+  // Распределяем живые статьи по блокам ленты
+  const mockRecentArticles = dbArticles.slice(0, 4); // Последние 4 статьи
+  const mockPopularArticles = [...dbArticles].sort((a, b) => b.views - a.views).slice(0, 6); // Сортировка по просмотрам
+
+  const allArticles = dbArticles;
+
   // СОСТОЯНИЯ ДЛЯ СОЗДАНИЯ СТАТЬИ И ЧЕРНОВИКА
   const [selectedCreateCategory, setSelectedCreateCategory] = useState(() => localStorage.getItem('draft_category') || null);
+  // ... дальше оставляй весь остальной старый код без изменений (состояния draft, useRef и т.д.) ...
   const [articleTitle, setArticleTitle] = useState(() => localStorage.getItem('draft_title') || '');
   const [articleDescription, setArticleDescription] = useState(() => localStorage.getItem('draft_description') || '');
   const [articleContent, setArticleContent] = useState(() => localStorage.getItem('draft_content') || '');
@@ -1698,6 +1744,26 @@ const Articles = () => {
   }, [currentView]);
 
   // ФУНКЦИЯ СОХРАНЕНИЯ ЧЕРНОВИКА (С защитой от переполнения)
+  const handleBecomeAuthor = async () => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      alert('Войдите в аккаунт!');
+      return;
+    }
+    try {
+      const apiHost = window.location.hostname;
+      // Отправляем запрос на твой UserProfileView бэкенда
+      await axios.patch(`http://${apiHost}:8000/api/profile/`, { is_author: true }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUserRole('Автор статей');
+      alert('Поздравляем! Вы стали автором проекта. Теперь кнопка создания статей активна.');
+    } catch (err) {
+      console.error("Ошибка смены статуса:", err);
+      alert("Не удалось сохранить статус автора на сервере.");
+    }
+  };
+
   const saveDraft = () => {
     try {
       localStorage.setItem('draft_title', articleTitle);
@@ -1723,6 +1789,84 @@ const Articles = () => {
       // Если памяти всё-таки не хватило
       console.error(error);
       alert('Ошибка сохранения! Картинки в статье занимают слишком много памяти. Пожалуйста, удалите несколько картинок.');
+    }
+  };
+
+  // ФУНКЦИЯ ПУБЛИКАЦИИ СТАТЬИ НА БЭКЕНД
+  const publishArticle = async () => {
+    // 1. Проверяем, всё ли заполнено
+    if (!articleTitle || !articleDescription || !articleContent || !selectedCreateCategory) {
+      alert('Пожалуйста, заполните все поля (название, описание, текст и категорию).');
+      return;
+    }
+
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      alert('Необходима авторизация!');
+      return;
+    }
+
+    // 2. Упаковываем данные в FormData (обязательно для передачи файлов/картинок)
+    const formData = new FormData();
+    formData.append('title', articleTitle);
+    formData.append('summary', articleDescription);
+    
+    // Берем актуальный текст прямо из редактора
+    // Найти строку 923 и заменить на это:
+    const richEditor = document.getElementById('rich-text-editor');
+    const currentHTML = richEditor ? richEditor.innerHTML : articleContent;
+    formData.append('content', currentHTML);
+
+    // 3. МАППИНГ КАТЕГОРИЙ
+    // Бэкенд ждет ID категории (цифру), а у нас текст ('Лайфхаки'). 
+    // Делаем простую связку (убедись, что в админке Django у них именно такие ID)
+    const categoryMap = {
+      'Советы по сортировке': 1,
+      'Лайфхаки': 2,
+      'Новости отрасли': 3,
+      'История': 4,
+      'Экопросвещение': 5
+    };
+    formData.append('category', categoryMap[selectedCreateCategory] || 1);
+
+    // 4. Достаем РЕАЛЬНЫЙ файл картинки из скрытого инпута (а не base64 строку)
+    if (coverInputRef.current && coverInputRef.current.files[0]) {
+      formData.append('cover_image', coverInputRef.current.files[0]);
+    }
+
+    try {
+      // 5. Отправляем POST запрос
+      // Автоматически определяет, где запущен сайт: на localhost или на VPS
+      const apiHost = window.location.hostname;
+
+      // 5. Отправляем POST запрос на правильный хост
+      await axios.post(`http://${apiHost}:8000/api/articles/`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      // 6. Очищаем форму
+      setArticleTitle('');
+      setArticleDescription('');
+      setArticleContent('');
+      setCoverImage(null);
+      if (editorRef.current) editorRef.current.innerHTML = '';
+      
+      // Очищаем кэш черновика
+      localStorage.removeItem('draft_title');
+      localStorage.removeItem('draft_description');
+      localStorage.removeItem('draft_content');
+      localStorage.removeItem('draft_category');
+      localStorage.removeItem('draft_cover');
+
+      alert('Ура! Статья успешно отправлена на модерацию.');
+      setCurrentView('feed'); // Возвращаем в ленту
+
+    } catch (error) {
+      console.error('Ошибка при публикации:', error);
+      alert('Ошибка при публикации. Проверьте консоль браузера.');
     }
   };
 
@@ -1896,23 +2040,23 @@ const Articles = () => {
   };
 
   // ВОЗВРАЩЕНЫ ВСЕ СТАТЬИ
-  const mockRecentArticles = [
-    { id: 1, image: '/article1.jpg', category: 'Советы по сортировке', title: 'Как правильно сортировать пластик дома?', description: 'Разбираем маркировку и основные правила подготовки пластика к переработке.', date: '22 апреля 12:00', views: 1220, author: 'Иван Иванов', content: 'Тема экологии и осознанного потребления становится всё более актуальной. Важно понимать, что каждый маленький шаг, будь то отказ от пластиковой трубочки или правильная утилизация старого смартфона, вносит огромный вклад в будущее нашей планеты.\n\nОсновные рекомендации из статьи:\n• Изучайте маркировку на упаковках\n• Пользуйтесь многоразовыми альтернативами\n• Поддерживайте локальные эко-инициативы\n\nВ этой статье мы подробно рассмотрели, как современные технологии и личная ответственность могут изменить мир вокруг нас к лучшему.' },
-    { id: 2, image: '/article2.jpg', category: 'История', title: 'История переработки: от древних времен до сегодня', description: 'Как люди относились к мусору сотни лет назад.', date: '26 апреля 16:00', views: 800, author: 'Мария Смирнова', content: 'Здесь текст статьи про историю переработки...' },
-    { id: 3, image: '/article3.jpg', category: 'Новости отрасли', title: 'Новый способ переработки в Европе', description: 'Революционный стартап представил технологию полного разложения текстиля.', date: '24 апреля 13:30', views: 798, author: 'Анна К.', content: 'Здесь текст про переработку в Европе...' },
-    { id: 4, image: '/article4.jpg', category: 'Экопросвещение', title: 'Zero waste: с чего начать новичку', description: '5 простых привычек, которые уменьшат количество вашего мусора в два раза.', date: '20 апреля 12:00', views: 656, author: 'Иван Иванов', content: 'Здесь текст про Zero Waste...' }
-  ];
+  //const mockRecentArticles = [
+    //{ id: 1, image: '/article1.jpg', category: 'Советы по сортировке', title: 'Как правильно сортировать пластик дома?', description: 'Разбираем маркировку и основные правила подготовки пластика к переработке.', date: '22 апреля 12:00', views: 1220, author: 'Иван Иванов', content: 'Тема экологии и осознанного потребления становится всё более актуальной. Важно понимать, что каждый маленький шаг, будь то отказ от пластиковой трубочки или правильная утилизация старого смартфона, вносит огромный вклад в будущее нашей планеты.\n\nОсновные рекомендации из статьи:\n• Изучайте маркировку на упаковках\n• Пользуйтесь многоразовыми альтернативами\n• Поддерживайте локальные эко-инициативы\n\nВ этой статье мы подробно рассмотрели, как современные технологии и личная ответственность могут изменить мир вокруг нас к лучшему.' },
+    //{ id: 2, image: '/article2.jpg', category: 'История', title: 'История переработки: от древних времен до сегодня', description: 'Как люди относились к мусору сотни лет назад.', date: '26 апреля 16:00', views: 800, author: 'Мария Смирнова', content: 'Здесь текст статьи про историю переработки...' },
+    //{ id: 3, image: '/article3.jpg', category: 'Новости отрасли', title: 'Новый способ переработки в Европе', description: 'Революционный стартап представил технологию полного разложения текстиля.', date: '24 апреля 13:30', views: 798, author: 'Анна К.', content: 'Здесь текст про переработку в Европе...' },
+    //{ id: 4, image: '/article4.jpg', category: 'Экопросвещение', title: 'Zero waste: с чего начать новичку', description: '5 простых привычек, которые уменьшат количество вашего мусора в два раза.', date: '20 апреля 12:00', views: 656, author: 'Иван Иванов', content: 'Здесь текст про Zero Waste...' }
+  //];
 
-  const mockPopularArticles = [
-    { id: 5, image: '/article5.jpg', category: 'Новости отрасли', title: 'Проблема батареек: что делать?', description: 'Почему одна пальчиковая батарейка загрязняет 20 квадратных метров почвы.', date: '21 апреля 18:30', views: 2540, author: 'Эко Патруль', content: 'Текст...' },
-    { id: 6, image: '/article6.jpg', category: 'Советы по сортировке', title: 'Куда девать старую электронику?', description: 'Гайд по утилизации старых смартфонов, ноутбуков и бытовой техники.', date: '20 апреля 12:00', views: 2340, author: 'Иван Иванов', content: 'Текст...' },
-    { id: 7, image: '/article7.jpg', category: 'Экопросвещение', title: 'Мифы о биоразлагаемом пластике', description: 'Почему не всё то эко, что так называется, и как не попасться на гринвошинг.', date: '26 апреля 14:00', views: 2548, author: 'Эко Патруль', content: 'Текст...' },
-    { id: 8, image: '/article8.jpg', category: 'Новости отрасли', title: 'Беспластиковая упаковка: тренд 2026 года', description: 'Крупные ритейлеры переходят на биоразлагаемые материалы. Разбираемся, насколько это эффективно.', date: '27 апреля 10:00', views: 1456, author: 'Мария Смирнова', content: 'Текст...' },
-    { id: 9, image: '/article9.jpg', category: 'Советы по сортировке', title: 'Как подготовить стекло к сдаче', description: 'Почему важно снимать этикетки и какие крышки нельзя сдавать.', date: '19 апреля 12:30', views: 2940, author: 'Иван Иванов', content: 'Текст...' },
-    { id: 10, image: '/article10.jpg', category: 'Лайфхаки', title: 'Снижаем отходы на кухне', description: 'Лайфхаки по хранению на кухне.', date: '27 апреля 14:00', views: 2548, author: 'Анна К.', content: 'Текст...' },
-  ];
+  //const mockPopularArticles = [
+    //{ id: 5, image: '/article5.jpg', category: 'Новости отрасли', title: 'Проблема батареек: что делать?', description: 'Почему одна пальчиковая батарейка загрязняет 20 квадратных метров почвы.', date: '21 апреля 18:30', views: 2540, author: 'Эко Патруль', content: 'Текст...' },
+    //{ id: 6, image: '/article6.jpg', category: 'Советы по сортировке', title: 'Куда девать старую электронику?', description: 'Гайд по утилизации старых смартфонов, ноутбуков и бытовой техники.', date: '20 апреля 12:00', views: 2340, author: 'Иван Иванов', content: 'Текст...' },
+    //{ id: 7, image: '/article7.jpg', category: 'Экопросвещение', title: 'Мифы о биоразлагаемом пластике', description: 'Почему не всё то эко, что так называется, и как не попасться на гринвошинг.', date: '26 апреля 14:00', views: 2548, author: 'Эко Патруль', content: 'Текст...' },
+    //{ id: 8, image: '/article8.jpg', category: 'Новости отрасли', title: 'Беспластиковая упаковка: тренд 2026 года', description: 'Крупные ритейлеры переходят на биоразлагаемые материалы. Разбираемся, насколько это эффективно.', date: '27 апреля 10:00', views: 1456, author: 'Мария Смирнова', content: 'Текст...' },
+    //{ id: 9, image: '/article9.jpg', category: 'Советы по сортировке', title: 'Как подготовить стекло к сдаче', description: 'Почему важно снимать этикетки и какие крышки нельзя сдавать.', date: '19 апреля 12:30', views: 2940, author: 'Иван Иванов', content: 'Текст...' },
+    //{ id: 10, image: '/article10.jpg', category: 'Лайфхаки', title: 'Снижаем отходы на кухне', description: 'Лайфхаки по хранению на кухне.', date: '27 апреля 14:00', views: 2548, author: 'Анна К.', content: 'Текст...' },
+  //];
 
-  const allArticles = [...mockRecentArticles, ...mockPopularArticles];
+  //const allArticles = [...mockRecentArticles, ...mockPopularArticles];
 
   // ФИЛЬТРАЦИЯ СТАТЕЙ ДЛЯ БАЗЫ ЗНАНИЙ ПО ПОИСКУ
   const filteredKnowledgeArticles = allArticles.filter(article => {
@@ -2475,7 +2619,7 @@ const Articles = () => {
 
           <div className="d-flex justify-content-between">
             <button onClick={saveDraft} style={{ padding: '12px 32px', backgroundColor: '#F4F6E3', color: '#18442A', borderRadius: '8px', border: 'none', fontFamily: '"Actay", sans-serif', fontWeight: '700', cursor: 'pointer', width: '48%', transition: 'opacity 0.2s' }}>Сохранить черновик</button>
-            <button style={{ padding: '12px 32px', backgroundColor: '#18442A', color: '#FFFFFF', borderRadius: '8px', border: 'none', fontFamily: '"Actay", sans-serif', fontWeight: '700', cursor: 'pointer', width: '48%' }}>Опубликовать статью</button>
+            <button onClick={publishArticle} style={{ padding: '12px 32px', backgroundColor: '#18442A', color: '#FFFFFF', borderRadius: '8px', border: 'none', fontFamily: '"Actay", sans-serif', fontWeight: '700', cursor: 'pointer', width: '48%' }}>ТЕЕЕЕЕЕЕЕЕЕЕЕЕЕЕЕЕЕЕЕЕЕЕЕЕСТ</button>
           </div>
         </div>
 
@@ -2550,7 +2694,7 @@ const Articles = () => {
               <p style={{ fontFamily: '"Actay", sans-serif', color: '#18442A', fontSize: '14px', lineHeight: '1.4', marginBottom: '24px' }}>Помогите нашему сообществу<br />вырасти, делясь собственным<br />опытом и советами.</p>
               {/* Меняем статус при клике */}
               <button 
-                onClick={() => setUserRole('Автор статей')} 
+                onClick={handleBecomeAuthor}
                 className="btn w-100" 
                 style={{ backgroundColor: '#18442A', color: 'white', borderRadius: '8px', padding: '10px', fontFamily: '"Actay", sans-serif' }}
               >
@@ -2721,7 +2865,8 @@ const Profile = ({ currentUser, onLogout }) => {
       }
 
       try {
-        const response = await axios.get('http://193.233.201.124:8000/api/profile/', {
+        const apiHost = window.location.hostname; // Определяем хост (localhost или VPS)
+        const response = await axios.get(`http://${apiHost}:8000/api/profile/`, {
           headers: {
             Authorization: `Bearer ${token}` 
           }
@@ -3032,7 +3177,7 @@ const Profile = ({ currentUser, onLogout }) => {
                   {/* ЕСЛИ ЕСТЬ АВАТАР - ПОКАЗЫВАЕМ ЕГО, ИНАЧЕ - СМАЙЛИК */}
                   {formData.avatar ? (
                     <img 
-                      src={formData.avatar.startsWith('http') ? formData.avatar : `http://193.233.201.124:8000${formData.avatar}`} 
+                      src={formData.avatar.startsWith('http') ? formData.avatar : `http://${window.location.hostname}:8000${formData.avatar}`} 
                       alt="avatar" 
                       style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} 
                     />
@@ -4039,7 +4184,7 @@ function App() {
         <Route path="/" element={<Home />} />
         {/* Передаем currentUser в MapPage, чтобы там проверять, можно ли добавить точку */}
         <Route path="/map" element={<MapPage currentUser={currentUser} />} />
-        <Route path="/articles" element={<Articles />} />
+        <Route path="/articles" element={<Articles currentUser={currentUser} />} />
         <Route path="/login" element={<Login setCurrentUser={setCurrentUser} />} />
         <Route path="/profile" element={<Profile currentUser={currentUser} onLogout={handleLogout} />} />
         <Route path="/edit-point/:id" element={<EditPoint />} />

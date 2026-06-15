@@ -23,18 +23,21 @@ const Login = ({ setCurrentUser }) => {
     try {
       console.log('Попытка входа с данными:', formData);
       
-      const response = await axios.post('http://193.233.201.124:8000/api/token/', {
+      const apiHost = window.location.hostname; // Автоматически определяет хост
+      
+      // ИСПРАВЛЕНО: Шлем POST-запрос на получение JWT-токенов
+      const response = await axios.post(`http://${apiHost}:8000/api/token/`, {
         username: formData.email.split('@')[0], 
         password: formData.password
       });
 
       console.log('Токены получены:', response.data);
       
-      // Сохраняем токены
+      // Сохраняем реальные токены в память браузера
       localStorage.setItem('access_token', response.data.access);
       localStorage.setItem('refresh_token', response.data.refresh);
       
-      // ИСПРАВЛЕНИЕ: Сразу получаем профиль и обновляем глобальное состояние (шапку)
+      // Сразу получаем профиль и обновляем глобальное состояние (шапку)
       try {
         const userProfile = await authService.getProfile();
         setCurrentUser(userProfile);

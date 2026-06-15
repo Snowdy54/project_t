@@ -30,9 +30,11 @@ const Register = () => {
     try {
       console.log('Попытка регистрации с данными:', formData);
       
-      // Отправляем данные на бэкенд
-      const response = await axios.post('http://193.233.201.124:8000/api/register/', {
-        username: formData.email.split('@')[0], // Генерируем username из email (до @), т.к. Django требует username
+      const apiHost = window.location.hostname; // Автоматически определяет хост
+      
+      // ИСПРАВЛЕНО: Шлем POST-запрос на создание нового пользователя
+      const response = await axios.post(`http://${apiHost}:8000/api/register/`, {
+        username: formData.email.split('@')[0],
         email: formData.email,
         password: formData.password,
         first_name: formData.firstName,
@@ -41,14 +43,12 @@ const Register = () => {
 
       console.log('Успешная регистрация:', response.data);
       
-      // Сразу после регистрации перекидываем на страницу входа
       alert("Регистрация прошла успешно! Теперь вы можете войти.");
       navigate('/login');
 
     } catch (err) {
       console.error(err);
       if (err.response && err.response.data) {
-        // Если сервер вернул список ошибок (например, "Такой email уже существует")
         const errorMessages = Object.values(err.response.data).flat().join(', ');
         setError(errorMessages || 'Ошибка при регистрации. Проверьте введенные данные.');
       } else {
